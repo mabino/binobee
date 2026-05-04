@@ -35,6 +35,9 @@ const { initials, escHtml, calcTimerState } = window.clientUtils;
 // ── TTS init ───────────────────────────────────────────────────────────────
 tts.init();
 
+// ── Chat + Voice init ──────────────────────────────────────────────────────
+Chat.init(socket);
+
 socket.on('connect', () => { state.myId = socket.id; });
 
 socket.on('tts:config', cfg => {
@@ -183,6 +186,7 @@ $('btn-start').addEventListener('click', () => {
 });
 
 $('btn-leave-lobby').addEventListener('click', () => {
+  VoiceChat.disable(socket);
   socket.emit('room:leave');
   location.reload();
 });
@@ -246,11 +250,17 @@ function updateModeBadge(mode) {
   $('mode-badge').textContent = labels[mode] || mode;
 }
 
+// Track how many opponents have submitted this round
+let opponentsAnswered = 0;
+let totalOpponents = 0;
+
 socket.on('game:round-start', data => {
   state.currentWord = data.ttsWord;
   state.submitted = false;
   timerMax = data.timerSeconds;
   roundStartTime = Date.now();
+  opponentsAnswered = 0;
+  totalOpponents = Object.keys(data.scores || {}).length - 1;
 
   // Update round label
   if (data.mode === 'rounds' && data.totalRounds) {
@@ -293,27 +303,21 @@ socket.on('game:round-start', data => {
 });
 
 function updateScoreBoxes(scores, lives, mode) {
-  const players = Object.values(scores);
-  if (players.length < 2) return;
-
-  // Identify which player is me and which is opponent
-  const me = players.find(p => p.id === state.myId);
-  const opp = players.find(p => p.id !== state.myId);
-  if (!me || !opp) return;
-
-  const meL  = lives?.[me.id]?.lives;
-  const oppL = lives?.[opp.id]?.lives;
-
-  $('score-a').innerHTML = `
-    <div class="score-name">${escHtml(me.name)} <span style="color:var(--accent);font-size:.7rem">You</span></div>
-    <div class="score-val">${me.score}</div>
-    ${mode === 'sudden-death' && meL != null ? `<div class="lives-row">${'❤️'.repeat(Math.max(0, meL))}</div>` : ''}
-  `;
-  $('score-b').innerHTML = `
-    <div class="score-name" style="text-align:right">${escHtml(opp.name)}</div>
-    <div class="score-val">${opp.score}</div>
-    ${mode === 'sudden-death' && oppL != null ? `<div class="lives-row" style="text-align:right">${'❤️'.repeat(Math.max(0, oppL))}</div>` : ''}
-  `;
+  const container = $('scores-container');
+  if (!container) return;
+  container.innerHTML = '';
+  for (const p of Object.values(scores)) {
+    const isMe = p.id === state.myId;
+    const l = lives?.[p.id]?.lives;
+    const box = document.createElement('div');
+    box.className = `score-box${isMe ? ' is-me' : ''}`;
+    box.innerHTML = `
+      <div class="score-name">${escHtml(p.name)}${isMe ? ' <small style="color:var(--accent)">you</small>' : ''}</div>
+      <div class="score-val">${p.score}</div>
+      ${mode === 'sudden-death' && l != null ? `<div class="lives-row">${'❤️'.repeat(Math.max(0, l))}</div>` : ''}
+    `;
+    container.appendChild(box);
+  }
 }
 
 socket.on('game:timer', ({ timeLeft }) => {
@@ -366,6 +370,13 @@ function submitAnswer() {
 
 socket.on('game:answer-in', ({ playerId }) => {
   if (playerId !== state.myId) {
+    opponentsAnswered++;
+    const remaining = totalOpponents - opponentsAnswered;
+    if (remaining > 0) {
+      $('opponent-submitted-msg').textContent = `⏳ ${opponentsAnswered} of ${totalOpponents} opponents submitted…`;
+    } else {
+      $('opponent-submitted-msg').textContent = `⏳ All opponents submitted!`;
+    }
     $('opponent-submitted-msg').classList.remove('hidden');
   }
 });
@@ -408,28 +419,17 @@ socket.on('game:round-result', ({ word, results, scores, lives }) => {
     container.appendChild(card);
   }
 
-  // Score summary
-  const players = Object.values(scores);
-  const me  = players.find(p => p.id === state.myId);
-  const opp = players.find(p => p.id !== state.myId);
-  if (me && opp) {
-    const mode = state.config.mode;
-    const meL  = lives?.[me.id]?.lives;
-    const oppL = lives?.[opp.id]?.lives;
-    $('result-scores').innerHTML = `
-      <div class="score-item">
-        <div class="sname">${escHtml(me.name)}</div>
-        <div class="sval">${me.score}</div>
-        ${mode === 'sudden-death' && meL != null ? `<div class="slives">${'❤️'.repeat(Math.max(0,meL))}</div>` : ''}
-      </div>
-      <div class="vs-sep">vs</div>
-      <div class="score-item">
-        <div class="sname">${escHtml(opp.name)}</div>
-        <div class="sval">${opp.score}</div>
-        ${mode === 'sudden-death' && oppL != null ? `<div class="slives">${'❤️'.repeat(Math.max(0,oppL))}</div>` : ''}
-      </div>
-    `;
-  }
+  // Score summary — all players sorted by score
+  const allPlayers = Object.values(scores).sort((a, b) => b.score - a.score);
+  const mode = state.config.mode;
+  $('result-scores').innerHTML = allPlayers.map((p, i) => `
+    ${i > 0 ? '<div class="vs-sep">·</div>' : ''}
+    <div class="score-item">
+      <div class="sname">${escHtml(p.name)}${p.id === state.myId ? ' <small>(you)</small>' : ''}</div>
+      <div class="sval">${p.score}</div>
+      ${mode === 'sudden-death' && lives?.[p.id]?.lives != null ? `<div class="slives">${'❤️'.repeat(Math.max(0, lives[p.id].lives))}</div>` : ''}
+    </div>
+  `).join('');
 
   showScreen('result');
 });
@@ -456,27 +456,16 @@ socket.on('game:over', ({ winner, scores, lives, reason }) => {
 
   $('gameover-reason').textContent = reason || '';
 
-  const players = Object.values(scores);
-  const me  = players.find(p => p.id === state.myId);
-  const opp = players.find(p => p.id !== state.myId);
-  if (me && opp) {
-    const mode = state.config.mode;
-    const meL  = lives?.[me.id]?.lives;
-    const oppL = lives?.[opp.id]?.lives;
-    $('gameover-scores').innerHTML = `
-      <div class="score-item">
-        <div class="sname">${escHtml(me.name)} (you)</div>
-        <div class="sval">${me.score}</div>
-        ${mode === 'sudden-death' && meL != null ? `<div class="slives">${'❤️'.repeat(Math.max(0,meL))}</div>` : ''}
-      </div>
-      <div class="vs-sep">vs</div>
-      <div class="score-item">
-        <div class="sname">${escHtml(opp.name)}</div>
-        <div class="sval">${opp.score}</div>
-        ${mode === 'sudden-death' && oppL != null ? `<div class="slives">${'❤️'.repeat(Math.max(0,oppL))}</div>` : ''}
-      </div>
-    `;
-  }
+  const allPlayers = Object.values(scores).sort((a, b) => b.score - a.score);
+  const mode = state.config.mode;
+  $('gameover-scores').innerHTML = allPlayers.map((p, i) => `
+    ${i > 0 ? '<div class="vs-sep">·</div>' : ''}
+    <div class="score-item">
+      <div class="sname">${escHtml(p.name)}${p.id === state.myId ? ' (you)' : ''}</div>
+      <div class="sval">${p.score}</div>
+      ${mode === 'sudden-death' && lives?.[p.id]?.lives != null ? `<div class="slives">${'❤️'.repeat(Math.max(0, lives[p.id].lives))}</div>` : ''}
+    </div>
+  `).join('');
 
   $('rematch-status').classList.add('hidden');
   showScreen('gameover');
@@ -497,7 +486,7 @@ socket.on('game:started', ({ config }) => {
 $('btn-rematch').addEventListener('click', () => {
   socket.emit('game:rematch', res => {
     if (res?.success) {
-      $('rematch-status').textContent = '⏳ Waiting for opponent…';
+      $('rematch-status').textContent = '⏳ Waiting for other players…';
       $('rematch-status').classList.remove('hidden');
       $('btn-rematch').disabled = true;
     }
@@ -505,8 +494,49 @@ $('btn-rematch').addEventListener('click', () => {
 });
 
 $('btn-leave-gameover').addEventListener('click', () => {
+  VoiceChat.disable(socket);
   socket.emit('room:leave');
   location.reload();
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+//  VOICE CHAT
+// ══════════════════════════════════════════════════════════════════════════
+$('btn-voice').addEventListener('click', async () => {
+  const btn = $('btn-voice');
+  if (!VoiceChat.isEnabled) {
+    const ok = await VoiceChat.enable(socket);
+    if (ok) {
+      btn.textContent = '🎤 Mute';
+      btn.classList.add('voice-active');
+    } else {
+      btn.textContent = '🎤 Denied';
+    }
+  } else {
+    const muted = VoiceChat.toggleMute();
+    btn.textContent = muted ? '🔇 Unmute' : '🎤 Mute';
+  }
+});
+
+// WebRTC socket events
+socket.on('voice:peer-joined', ({ peerId }) => {
+  VoiceChat.handlePeerJoined(peerId);
+});
+
+socket.on('voice:peer-left', ({ peerId }) => {
+  VoiceChat.removePeer(peerId);
+});
+
+socket.on('webrtc:offer', ({ fromId, offer }) => {
+  VoiceChat.handleOffer(fromId, offer);
+});
+
+socket.on('webrtc:answer', ({ fromId, answer }) => {
+  VoiceChat.handleAnswer(fromId, answer);
+});
+
+socket.on('webrtc:ice-candidate', ({ fromId, candidate }) => {
+  VoiceChat.handleIceCandidate(fromId, candidate);
 });
 
 // ── Error handler ──────────────────────────────────────────────────────────

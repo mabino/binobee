@@ -177,7 +177,6 @@ function handlePlayerLeave(socketId) {
 
   const playerName = room.players[socketId]?.name || 'A player';
   const wasPlaying = room.phase === 'playing';
-  const otherPlayerId = room.getOtherPlayer(socketId);
 
   roomManager.removePlayer(socketId);
 
@@ -188,17 +187,21 @@ function handlePlayerLeave(socketId) {
     io.to(room.code).emit('room:player-left', { playerName, playerId: socketId });
 
     if (wasPlaying) {
-      clearRoomTimers(room.code);
-      const winner = otherPlayerId
-        ? { id: otherPlayerId, name: room.players[otherPlayerId]?.name }
-        : null;
-      io.to(room.code).emit('game:over', {
-        winner,
-        scores: room.getScores(),
-        lives: room.getLives(),
-        reason: 'opponent-disconnected'
-      });
-      room.phase = 'lobby';
+      const remainingIds = Object.keys(room.players);
+      if (remainingIds.length < 2) {
+        // Not enough players to continue
+        clearRoomTimers(room.code);
+        const lastPlayer = Object.values(room.players)[0];
+        const winner = lastPlayer ? { id: lastPlayer.id, name: lastPlayer.name } : null;
+        io.to(room.code).emit('game:over', {
+          winner,
+          scores: room.getScores(),
+          lives: room.getLives(),
+          reason: 'opponent-disconnected'
+        });
+        room.phase = 'lobby';
+      }
+      // If ≥2 players remain, the game continues uninterrupted
     }
 
     io.to(room.code).emit('room:updated', room.toPublic());
@@ -263,7 +266,7 @@ io.on('connection', (socket) => {
     const room = roomManager.getRoomByPlayer(socket.id);
     if (!room) return cb({ success: false, error: 'Not in a room' });
     if (room.hostId !== socket.id) return cb({ success: false, error: 'Host only' });
-    if (Object.keys(room.players).length < 2) return cb({ success: false, error: 'Need 2 players to start' });
+    if (Object.keys(room.players).length < 2) return cb({ success: false, error: 'Need at least 2 players to start' });
     if (room.phase === 'playing') return cb({ success: false, error: 'Game already started' });
 
     room.startGame();
@@ -292,8 +295,8 @@ io.on('connection', (socket) => {
     const room = roomManager.getRoomByPlayer(socket.id);
     if (!room) return cb?.({ success: false, error: 'Not in a room' });
     room.requestRematch(socket.id);
-    const allReady = Object.keys(room.players).length === 2 &&
-      Object.values(room.players).every(p => p.rematch);
+    const playerCount = Object.keys(room.players).length;
+    const allReady = playerCount >= 2 && Object.values(room.players).every(p => p.rematch);
     if (allReady) {
       room.startGame();
       io.to(room.code).emit('game:started', { config: room.config });
@@ -305,6 +308,45 @@ io.on('connection', (socket) => {
       });
     }
     cb?.({ success: true });
+  });
+
+  // ─── Text chat ─────────────────────────────────────────────────────────────
+  socket.on('chat:message', ({ text }) => {
+    const room = roomManager.getRoomByPlayer(socket.id);
+    if (!room) return;
+    const player = room.players[socket.id];
+    if (!player || !text?.trim()) return;
+    io.to(room.code).emit('chat:message', {
+      playerId: socket.id,
+      playerName: player.name,
+      text: String(text).trim().slice(0, 300),
+      timestamp: Date.now()
+    });
+  });
+
+  // ─── WebRTC signaling ───────────────────────────────────────────────────────
+  socket.on('voice:join', () => {
+    const room = roomManager.getRoomByPlayer(socket.id);
+    if (!room) return;
+    socket.to(room.code).emit('voice:peer-joined', { peerId: socket.id });
+  });
+
+  socket.on('voice:leave', () => {
+    const room = roomManager.getRoomByPlayer(socket.id);
+    if (!room) return;
+    socket.to(room.code).emit('voice:peer-left', { peerId: socket.id });
+  });
+
+  socket.on('webrtc:offer', ({ targetId, offer }) => {
+    io.to(targetId).emit('webrtc:offer', { fromId: socket.id, offer });
+  });
+
+  socket.on('webrtc:answer', ({ targetId, answer }) => {
+    io.to(targetId).emit('webrtc:answer', { fromId: socket.id, answer });
+  });
+
+  socket.on('webrtc:ice-candidate', ({ targetId, candidate }) => {
+    io.to(targetId).emit('webrtc:ice-candidate', { fromId: socket.id, candidate });
   });
 
   socket.on('disconnect', () => {

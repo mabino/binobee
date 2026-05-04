@@ -7,6 +7,19 @@
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
+  <!-- ─── Chat Sidebar ─────────────────────────────────────────────────────── -->
+  <div id="chat-sidebar" class="chat-sidebar hidden">
+    <div class="chat-header">
+      <span>💬 Chat</span>
+      <button id="btn-chat-close" class="btn-icon" title="Close chat">✕</button>
+    </div>
+    <div id="chat-messages" class="chat-messages"></div>
+    <div class="chat-input-row">
+      <input id="chat-input" type="text" maxlength="300" placeholder="Say something…" autocomplete="off" />
+      <button id="btn-chat-send" class="btn btn-primary btn-sm">Send</button>
+    </div>
+  </div>
+
   <!-- ─── Landing ─────────────────────────────────────── -->
   <div id="screen-landing" class="screen active">
     <div class="logo">🐝</div>
@@ -40,6 +53,11 @@
     </div>
 
     <div id="lobby-players" class="player-list"></div>
+
+    <!-- Chat + Voice toolbar -->
+    <div class="toolbar-row">
+      <button id="btn-chat-lobby" class="btn btn-secondary btn-sm">💬 Chat</button>
+    </div>
 
     <!-- Config (host only) -->
     <div id="lobby-config" class="card config-card hidden">
@@ -100,13 +118,18 @@
   <!-- ─── Game ──────────────────────────────────────────── -->
   <div id="screen-game" class="screen">
     <header class="game-header">
-      <div id="score-a" class="score-box"></div>
       <div class="round-info">
         <span id="round-label">Round 1</span>
         <div id="mode-badge" class="badge"></div>
       </div>
-      <div id="score-b" class="score-box score-right"></div>
+      <div id="scores-container" class="scores-container"></div>
     </header>
+
+    <!-- Game toolbar: voice + chat -->
+    <div class="toolbar-row">
+      <button id="btn-voice" class="btn btn-secondary btn-sm" title="Toggle voice chat">🎤 Voice</button>
+      <button id="btn-chat-game" class="btn btn-secondary btn-sm">💬 Chat</button>
+    </div>
 
     <!-- Timer -->
     <div class="timer-wrap">
@@ -162,6 +185,8 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="/tts.js"></script>
   <script src="/client-utils.js"></script>
+  <script src="/voice.js"></script>
+  <script src="/chat.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

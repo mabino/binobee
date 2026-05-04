@@ -48,7 +48,7 @@ class Room {
   }
 
   addPlayer(id, name) {
-    if (Object.keys(this.players).length >= 2) return { success: false, error: 'Room is full' };
+    if (Object.keys(this.players).length >= 8) return { success: false, error: 'Room is full' };
     this.players[id] = this._makePlayer(id, name);
     return { success: true };
   }
@@ -131,35 +131,23 @@ class Room {
       };
     }
 
-    const ids = Object.keys(this.players);
-    const [a, b] = ids;
-    const ra = results[a];
-    const rb = results[b];
+    const anyCorrect = Object.values(results).some(r => r.correct);
+    const allCorrect = Object.values(results).every(r => r.correct);
 
-    if (ra.correct && rb.correct) {
-      // Both correct — tie round; award point to both (except sudden-death)
-      if (this.config.mode !== 'sudden-death') {
-        this.players[a].score++;
-        this.players[b].score++;
+    for (const [id, r] of Object.entries(results)) {
+      if (r.correct) {
+        // Award point to correct players (not in sudden-death)
+        if (this.config.mode !== 'sudden-death') {
+          this.players[id].score++;
+        }
+        r.outcome = allCorrect ? 'tie' : 'win';
+      } else {
+        // Wrong players lose a life when someone else was correct, or in sudden-death when nobody correct
+        if (anyCorrect || this.config.mode === 'sudden-death') {
+          this.players[id].lives = Math.max(0, this.players[id].lives - 1);
+        }
+        r.outcome = anyCorrect ? 'loss' : 'both-wrong';
       }
-      ra.outcome = rb.outcome = 'tie';
-    } else if (ra.correct && !rb.correct) {
-      this.players[a].score++;
-      this.players[b].lives = Math.max(0, this.players[b].lives - 1);
-      ra.outcome = 'win';
-      rb.outcome = 'loss';
-    } else if (!ra.correct && rb.correct) {
-      this.players[b].score++;
-      this.players[a].lives = Math.max(0, this.players[a].lives - 1);
-      rb.outcome = 'win';
-      ra.outcome = 'loss';
-    } else {
-      // Both wrong
-      if (this.config.mode === 'sudden-death') {
-        this.players[a].lives = Math.max(0, this.players[a].lives - 1);
-        this.players[b].lives = Math.max(0, this.players[b].lives - 1);
-      }
-      ra.outcome = rb.outcome = 'both-wrong';
     }
 
     return results;
@@ -176,7 +164,8 @@ class Room {
       return players.some(p => p.score >= this.config.pointsToWin);
     }
     if (this.config.mode === 'sudden-death') {
-      return players.some(p => p.lives <= 0);
+      const alive = players.filter(p => p.lives > 0);
+      return alive.length <= 1;
     }
     return false;
   }

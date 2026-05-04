@@ -134,10 +134,19 @@ describe('Room.addPlayer', () => {
     expect(room.players['guest-1']).toBeDefined();
   });
 
-  test('rejects a third player (room full)', () => {
+  test('adds up to 7 more players (8 total)', () => {
     const room = makeRoom();
-    room.addPlayer('guest-1', 'Bob');
-    const result = room.addPlayer('guest-2', 'Carol');
+    for (let i = 1; i <= 7; i++) {
+      const result = room.addPlayer(`guest-${i}`, `Guest${i}`);
+      expect(result.success).toBe(true);
+    }
+    expect(Object.keys(room.players)).toHaveLength(8);
+  });
+
+  test('rejects a ninth player (room full)', () => {
+    const room = makeRoom();
+    for (let i = 1; i <= 7; i++) room.addPlayer(`guest-${i}`, `Guest${i}`);
+    const result = room.addPlayer('guest-8', 'Guest8');
     expect(result.success).toBe(false);
     expect(result.error).toMatch(/full/i);
   });

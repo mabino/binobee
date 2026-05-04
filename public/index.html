@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🐝 Spelling Bee — Head-to-Head</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <!-- ─── Landing ─────────────────────────────────────── -->
+  <div id="screen-landing" class="screen active">
+    <div class="logo">🐝</div>
+    <h1>Spelling Bee</h1>
+    <p class="tagline">Head-to-head spelling challenge</p>
+    <div class="card">
+      <label for="player-name">Your name</label>
+      <input id="player-name" type="text" maxlength="20" placeholder="Enter your name…" autocomplete="off" />
+      <div class="btn-group">
+        <button id="btn-create" class="btn btn-primary">Create Room</button>
+        <button id="btn-join-toggle" class="btn btn-secondary">Join Room</button>
+      </div>
+      <div id="join-form" class="hidden">
+        <label for="room-code-input">Room code</label>
+        <input id="room-code-input" type="text" maxlength="6" placeholder="XXXXXX" autocomplete="off"
+               style="text-transform:uppercase;letter-spacing:.2em" />
+        <button id="btn-join" class="btn btn-primary" style="margin-top:.5rem;width:100%">Join</button>
+      </div>
+    </div>
+    <div id="landing-error" class="error-msg hidden"></div>
+  </div>
+
+  <!-- ─── Lobby ─────────────────────────────────────────── -->
+  <div id="screen-lobby" class="screen">
+    <div class="logo">🐝</div>
+    <h2>Game Lobby</h2>
+    <div class="room-code-display">
+      <span class="label">Room Code</span>
+      <span id="lobby-code" class="code">——</span>
+      <button id="btn-copy-code" class="btn-icon" title="Copy code">📋</button>
+    </div>
+
+    <div id="lobby-players" class="player-list"></div>
+
+    <!-- Config (host only) -->
+    <div id="lobby-config" class="card config-card hidden">
+      <h3>⚙️ Game Settings</h3>
+
+      <label>Game Mode</label>
+      <div class="radio-group" id="mode-selector">
+        <label><input type="radio" name="mode" value="rounds" checked /> Rounds</label>
+        <label><input type="radio" name="mode" value="points" /> Points Race</label>
+        <label><input type="radio" name="mode" value="sudden-death" /> Sudden Death</label>
+      </div>
+
+      <div id="cfg-rounds" class="cfg-sub">
+        <label>Number of rounds: <strong id="rounds-val">10</strong></label>
+        <input id="cfg-max-rounds" type="range" min="3" max="30" value="10" />
+      </div>
+      <div id="cfg-points" class="cfg-sub hidden">
+        <label>Points to win: <strong id="points-val">5</strong></label>
+        <input id="cfg-points-to-win" type="range" min="3" max="20" value="5" />
+      </div>
+
+      <label>Timer: <strong id="timer-val">30</strong>s</label>
+      <input id="cfg-timer" type="range" min="10" max="90" value="30" />
+
+      <label>Difficulty</label>
+      <select id="cfg-difficulty">
+        <option value="mixed">Mixed</option>
+        <option value="easy">Easy</option>
+        <option value="medium">Medium</option>
+        <option value="hard">Hard</option>
+      </select>
+
+      <details class="dict-section">
+        <summary>📖 Custom Dictionary (optional)</summary>
+        <p class="hint">One word per line or comma-separated. At least 5 words required.</p>
+        <textarea id="custom-words" rows="4" placeholder="apple, banana, mango…"></textarea>
+        <div class="btn-group" style="margin-top:.5rem">
+          <button id="btn-upload-dict" class="btn btn-secondary btn-sm">Upload</button>
+          <button id="btn-clear-dict" class="btn btn-ghost btn-sm">Use Built-in</button>
+        </div>
+        <div id="dict-status" class="hint"></div>
+      </details>
+    </div>
+
+    <!-- Non-host waiting message -->
+    <p id="lobby-waiting" class="hint hidden">Waiting for the host to start…</p>
+
+    <button id="btn-start" class="btn btn-primary btn-lg hidden">Start Game 🚀</button>
+    <button id="btn-leave-lobby" class="btn btn-ghost">Leave</button>
+    <div id="lobby-error" class="error-msg hidden"></div>
+  </div>
+
+  <!-- ─── Game ──────────────────────────────────────────── -->
+  <div id="screen-game" class="screen">
+    <header class="game-header">
+      <div id="score-a" class="score-box"></div>
+      <div class="round-info">
+        <span id="round-label">Round 1</span>
+        <div id="mode-badge" class="badge"></div>
+      </div>
+      <div id="score-b" class="score-box score-right"></div>
+    </header>
+
+    <!-- Timer -->
+    <div class="timer-wrap">
+      <svg class="timer-ring" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="44" class="ring-bg"/>
+        <circle cx="50" cy="50" r="44" class="ring-fg" id="timer-ring-fg"/>
+      </svg>
+      <span id="timer-num" class="timer-num">30</span>
+    </div>
+
+    <!-- Word clues -->
+    <div id="clue-card" class="card clue-card">
+      <div class="clue-row">
+        <span id="clue-pos" class="pos-badge"></span>
+        <span id="clue-phonetic" class="phonetic"></span>
+        <button id="btn-hear" class="btn-icon btn-tts" title="Hear the word">🔊</button>
+      </div>
+      <p id="clue-definition" class="definition"></p>
+      <p id="clue-example" class="example hidden"></p>
+    </div>
+
+    <!-- Answer input -->
+    <div id="answer-wrap" class="answer-wrap">
+      <input id="answer-input" type="text" autocomplete="off" autocorrect="off"
+             spellcheck="false" placeholder="Type your spelling…" />
+      <button id="btn-submit" class="btn btn-primary">Submit</button>
+    </div>
+    <p id="answer-submitted-msg" class="hint hidden">✅ Answer submitted! Waiting for opponent…</p>
+    <p id="opponent-submitted-msg" class="hint hidden">⏳ Opponent has submitted their answer…</p>
+  </div>
+
+  <!-- ─── Round Result ──────────────────────────────────── -->
+  <div id="screen-result" class="screen">
+    <h2 id="result-word" class="revealed-word"></h2>
+    <div id="result-cards" class="result-cards"></div>
+    <div id="result-scores" class="score-summary"></div>
+    <p class="hint">Next round starting…</p>
+  </div>
+
+  <!-- ─── Game Over ─────────────────────────────────────── -->
+  <div id="screen-gameover" class="screen">
+    <div class="logo">🏆</div>
+    <h2 id="gameover-headline"></h2>
+    <div id="gameover-scores" class="score-summary large"></div>
+    <p id="gameover-reason" class="hint"></p>
+    <div class="btn-group" style="margin-top:1.5rem">
+      <button id="btn-rematch" class="btn btn-primary">Play Again 🔄</button>
+      <button id="btn-leave-gameover" class="btn btn-ghost">Leave</button>
+    </div>
+    <p id="rematch-status" class="hint hidden"></p>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/tts.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

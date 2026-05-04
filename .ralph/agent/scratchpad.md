@@ -23,3 +23,26 @@ Build a head-to-head web spelling bee game ready for two-player testing.
 ### Status
 - All source files created in iteration 1
 - Task: install deps, smoke test, commit
+
+## Iteration 2 — 2026-05-04
+
+### Verification
+- node_modules: already installed (express@4.22.1, socket.io@4.8.3, nodemon@3.1.14)
+- Smoke test on PORT=3001:
+  - HTML served at `/` → HTTP 200 ✅
+  - `/api/tts/config` → `{"serverTTS":false,"provider":"browser"}` ✅
+  - `/socket.io/socket.io.js` → HTTP 200 ✅
+- Git: commit `fcd5821` contains all source files
+- Game is fully ready for two-player testing
+
+### All objective requirements met
+- ✅ Room code based head-to-head (Socket.io rooms)
+- ✅ Timer-based spelling challenge (server-side authoritative timer)
+- ✅ Spelling bee rules (correct vs incorrect = score/lives)
+- ✅ Configurable modes: rounds / points-race / sudden-death
+- ✅ Custom dictionary upload + 700-word built-in
+- ✅ Word definition shown (Free Dictionary API with fallback)
+- ✅ TTS: browser Web Speech API + optional OpenAI/custom server TTS
+- ✅ Docker + docker-compose for deployment
+
+### Status: COMPLETE

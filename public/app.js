@@ -30,9 +30,7 @@ function showError(id, msg) {
   setTimeout(() => el.classList.add('hidden'), 4000);
 }
 
-function initials(name) {
-  return name.slice(0, 2).toUpperCase();
-}
+const { initials, escHtml, calcTimerState } = window.clientUtils;
 
 // ── TTS init ───────────────────────────────────────────────────────────────
 tts.init();
@@ -118,10 +116,6 @@ function renderPlayerList(players) {
     `;
     el.appendChild(row);
   }
-}
-
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ── Lobby config controls ──────────────────────────────────────────────────
@@ -235,7 +229,6 @@ function applyConfigToControls(cfg) {
 // ══════════════════════════════════════════════════════════════════════════
 //  GAME SCREEN
 // ══════════════════════════════════════════════════════════════════════════
-let timerCircumference = 276.46; // 2πr where r=44
 let timerMax = 30;
 
 socket.on('game:started', ({ config }) => {
@@ -325,12 +318,11 @@ socket.on('game:timer', ({ timeLeft }) => {
 
 function setTimer(left, max) {
   $('timer-num').textContent = left;
-  const pct = max > 0 ? left / max : 0;
-  const offset = timerCircumference * (1 - pct);
+  const { offset, urgent } = calcTimerState(left, max);
   $('timer-ring-fg').style.strokeDashoffset = offset;
 
   const wrap = $('screen-game').querySelector('.timer-wrap');
-  wrap.classList.toggle('timer-urgent', left <= 5 && left > 0);
+  wrap.classList.toggle('timer-urgent', urgent);
 }
 
 // ── Answer submission ──────────────────────────────────────────────────────

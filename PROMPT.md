@@ -1,9 +1,8 @@
-Create a web game that:
-	- Supports two players head-to-head via a room code
-	- Challenges players to spell a word before the timer runs out
-	- Uses spelling bee rules should one player spell correctly, the other player need spell incorrectly to lose
-	- Make configurable modes to play: number of rounds, points to win, or sudden death
-	- Add support for custom dictionary or built-in
-	- Show definition for context
-	- Support use of text-to-speech service or model for the purpose of reading the word outloud that need be spelled
-Task is complete when the game is ready for testing between two players.
+Fix this web game project in the followings was:
+	- Address the error [Error] Failed to load resource: the server responded with a status of 404 (File not found) (socket.io.js, line 0)
+[Error] ReferenceError: Can't find variable: io
+	Global Code (app.js:5).
+	- Include a unit test for each of the critical game functions.
+	- Document the game and its use (player guide) in README.md.
+
+Task is complete when these are ready for human review and testing. 

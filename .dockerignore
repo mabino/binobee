@@ -3,4 +3,6 @@ npm-debug.log*
 .env
 .DS_Store
 *.log
-public/socket.io/
+.ralph/
+ralph_tmp/
+.git/

@@ -110,7 +110,7 @@ const WORDS = {
     'rigmarole','sabotage','simultaneous','sophisticated','spontaneous',
     'subordinate','surveillance','susceptible','technological','temperament',
     'treacherous','unanimous','unprecedented','vulnerability','catastrophic',
-    'accommodate','Mediterranean','silhouette','desiccate','millennium',
+    'accommodate','mediterranean','silhouette','desiccate','millennium',
     'concurrence','occurrence','recommend','rhythm','separate','supersede',
     'conscience','lieutenant','bureaucracy','acquire','connoisseur'
   ]

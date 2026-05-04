@@ -1,7 +1,7 @@
 {
-  "name": "sprkspl-spelling-bee",
+  "name": "bino-bee",
   "version": "1.0.0",
-  "description": "Head-to-head multiplayer spelling bee game",
+  "description": "Bino Bee — The Spelling Bee for Binos (and Friends)",
   "main": "server.js",
   "engines": {
     "node": ">=18.0.0"

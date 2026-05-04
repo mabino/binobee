@@ -317,6 +317,6 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 8080;
 httpServer.listen(PORT, () => {
-  console.log(`🐝 Spelling Bee game on http://localhost:${PORT}`);
+  console.log(`🐝 Bino Bee on http://localhost:${PORT}`);
   console.log(`   TTS: ${process.env.TTS_PROVIDER || 'browser (Web Speech API)'}`);
 });

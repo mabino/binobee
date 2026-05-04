@@ -1,4 +1,4 @@
-# 🐝 Spelling Bee — Head-to-Head
+# 🐝 Bino Bee — The Spelling Bee for Binos (and Friends)
 
 A real-time two-player spelling bee game built with Node.js and Socket.IO. Two players compete to correctly spell words as fast as possible, hearing each word read aloud before typing their answer.
 

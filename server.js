@@ -17,6 +17,13 @@ const dictionary = new Dictionary();
 const roomTimers = new Map();
 
 app.use(express.json());
+
+// Serve the socket.io client bundle explicitly so it is always available,
+// even in environments where the prepare script did not run (e.g. bare npm ci).
+app.get('/socket.io/socket.io.js', (_req, res) => {
+  res.sendFile(require.resolve('socket.io/client-dist/socket.io.js'));
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // TTS config endpoint

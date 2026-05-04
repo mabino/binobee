@@ -4,10 +4,10 @@ services:
   game:
     build: .
     ports:
-      - "8000:3000"
+      - "8000:8080"
     environment:
       - NODE_ENV=production
-      - PORT=3000
+      - PORT=8080
       # ── Optional TTS configuration ──────────────────────────────────────────
       # Browser Web Speech API is used by default (no extra config needed).
       # To use OpenAI TTS:
@@ -19,7 +19,7 @@ services:
       #   - TTS_ENDPOINT_URL=https://your-tts-service/speak
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/tts/config"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/api/tts/config"]
       interval: 30s
       timeout: 5s
       retries: 3

@@ -7,6 +7,6 @@ COPY . .
 # The prepare script runs during `npm install` locally but not during `npm ci`,
 # so we run it explicitly here after all source files have been copied.
 RUN node scripts/copy-socket-client.js
-EXPOSE 3000
+EXPOSE 8080
 ENV NODE_ENV=production
 CMD ["node", "server.js"]

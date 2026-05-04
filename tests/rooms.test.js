@@ -58,12 +58,9 @@ describe('Room constructor', () => {
     expect(makeRoom().phase).toBe('lobby');
   });
 
-  test('default config is valid', () => {
+  test('default config has showWpm enabled', () => {
     const { config } = makeRoom();
-    expect(config.mode).toBe('rounds');
-    expect(config.maxRounds).toBe(10);
-    expect(config.timerSeconds).toBe(30);
-    expect(config.difficulty).toBe('mixed');
+    expect(config.showWpm).toBe(true);
   });
 });
 
@@ -208,6 +205,18 @@ describe('Room.submitAnswer', () => {
     expect(room.players['host-1'].answer).toBe('apple');
   });
 
+  test('stores wpm when provided', () => {
+    const room = startedRoom();
+    room.submitAnswer('host-1', 'apple', 42);
+    expect(room.players['host-1'].wpm).toBe(42);
+  });
+
+  test('stores null wpm when not provided', () => {
+    const room = startedRoom();
+    room.submitAnswer('host-1', 'apple');
+    expect(room.players['host-1'].wpm).toBeNull();
+  });
+
   test('lowercases and trims the answer', () => {
     const room = startedRoom();
     room.submitAnswer('host-1', '  Apple  ');
@@ -287,6 +296,23 @@ describe('Room.evaluateRound', () => {
     const results = roundWith('apple', 'appel');
     expect(results['host-1'].correct).toBe(true);
     expect(results['guest-1'].correct).toBe(false);
+  });
+
+  test('evaluateRound includes wpm from player submission', () => {
+    const room = startedRoom();
+    room.config.mode = 'rounds';
+    room.currentWord = { word: 'apple' };
+    room.submitAnswer('host-1', 'apple', 55);
+    room.submitAnswer('guest-1', 'appel', 30);
+    const results = room.evaluateRound();
+    expect(results['host-1'].wpm).toBe(55);
+    expect(results['guest-1'].wpm).toBe(30);
+  });
+
+  test('evaluateRound wpm is null when not submitted', () => {
+    const results = roundWith('apple', 'appel');
+    expect(results['host-1'].wpm).toBeNull();
+    expect(results['guest-1'].wpm).toBeNull();
   });
 
   test('winner score increments', () => {

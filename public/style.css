@@ -372,6 +372,30 @@ select { cursor: pointer; }
   width: 100%;
 }
 
+/* ── Config toggle (checkbox row) ───────────────────────────────────────── */
+.cfg-toggle {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  cursor: pointer;
+  color: var(--text);
+  font-size: .85rem;
+  font-weight: 500;
+}
+.cfg-toggle input[type="checkbox"] {
+  accent-color: var(--primary);
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+
+/* ── WPM tag on result cards ────────────────────────────────────────────── */
+.wpm-tag {
+  font-size: .75rem;
+  color: var(--accent);
+  margin-top: .15rem;
+}
+
 /* ── Utility ────────────────────────────────────────────────────────────── */
 .hidden { display: none !important; }
 #lobby-config strong { color: var(--primary); }

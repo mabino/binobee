@@ -18,7 +18,8 @@ class Room {
       pointsToWin: 5,
       timerSeconds: 30,
       difficulty: 'mixed',   // 'easy' | 'medium' | 'hard' | 'mixed'
-      customDictionary: null
+      customDictionary: null,
+      showWpm: true
     };
     this.phase = 'lobby';    // 'lobby' | 'playing' | 'over'
     this.currentWord = null;
@@ -27,11 +28,11 @@ class Room {
   }
 
   _makePlayer(id, name) {
-    return { id, name, score: 0, lives: 3, answer: null, answeredAt: null, rematch: false };
+    return { id, name, score: 0, lives: 3, answer: null, answeredAt: null, wpm: null, rematch: false };
   }
 
   setConfig(cfg) {
-    const allowed = ['mode', 'maxRounds', 'pointsToWin', 'timerSeconds', 'difficulty'];
+    const allowed = ['mode', 'maxRounds', 'pointsToWin', 'timerSeconds', 'difficulty', 'showWpm'];
     for (const key of allowed) {
       if (cfg[key] !== undefined) this.config[key] = cfg[key];
     }
@@ -102,12 +103,13 @@ class Room {
     return wordData;
   }
 
-  submitAnswer(playerId, answer) {
+  submitAnswer(playerId, answer, wpm = null) {
     if (!this.players[playerId]) return { success: false, error: 'Unknown player' };
     if (this.phase !== 'playing') return { success: false, error: 'Game not active' };
     if (this.players[playerId].answer !== null) return { success: false, error: 'Already submitted' };
     this.players[playerId].answer = String(answer).trim().toLowerCase();
     this.players[playerId].answeredAt = Date.now();
+    this.players[playerId].wpm = (typeof wpm === 'number' && wpm >= 0) ? Math.round(wpm) : null;
     return { success: true };
   }
 
@@ -124,7 +126,8 @@ class Room {
         playerId: id,
         playerName: p.name,
         answer: p.answer,
-        correct: p.answer === correct
+        correct: p.answer === correct,
+        wpm: p.wpm
       };
     }
 

@@ -125,6 +125,7 @@ function syncConfig() {
   const pointsToWin = parseInt($('cfg-points-to-win').value);
   const timerSeconds = parseInt($('cfg-timer').value);
   const difficulty = $('cfg-difficulty').value;
+  const showWpm = $('cfg-show-wpm').checked;
 
   $('rounds-val').textContent = maxRounds;
   $('points-val').textContent = pointsToWin;
@@ -133,7 +134,7 @@ function syncConfig() {
   $('cfg-rounds').classList.toggle('hidden', mode !== 'rounds');
   $('cfg-points').classList.toggle('hidden', mode !== 'points');
 
-  state.config = { mode, maxRounds, pointsToWin, timerSeconds, difficulty };
+  state.config = { mode, maxRounds, pointsToWin, timerSeconds, difficulty, showWpm };
 
   socket.emit('game:configure', { config: state.config }, () => {});
 }
@@ -223,6 +224,7 @@ function applyConfigToControls(cfg) {
   if (cfg.pointsToWin) $('cfg-points-to-win').value = cfg.pointsToWin;
   if (cfg.timerSeconds)$('cfg-timer').value          = cfg.timerSeconds;
   if (cfg.difficulty)  $('cfg-difficulty').value     = cfg.difficulty;
+  if (cfg.showWpm != null) $('cfg-show-wpm').checked = cfg.showWpm;
   syncConfig();
 }
 
@@ -230,6 +232,7 @@ function applyConfigToControls(cfg) {
 //  GAME SCREEN
 // ══════════════════════════════════════════════════════════════════════════
 let timerMax = 30;
+let roundStartTime = null;
 
 socket.on('game:started', ({ config }) => {
   state.config = config;
@@ -247,6 +250,7 @@ socket.on('game:round-start', data => {
   state.currentWord = data.ttsWord;
   state.submitted = false;
   timerMax = data.timerSeconds;
+  roundStartTime = Date.now();
 
   // Update round label
   if (data.mode === 'rounds' && data.totalRounds) {
@@ -336,13 +340,18 @@ function submitAnswer() {
   const answer = $('answer-input').value.trim();
   if (!answer) return;
 
+  const elapsedMs = roundStartTime ? Date.now() - roundStartTime : 0;
+  const wpm = (elapsedMs > 0 && answer.length > 0)
+    ? Math.min(300, Math.round((answer.length / 5) / (elapsedMs / 60000)))
+    : null;
+
   state.submitted = true;
   $('answer-input').disabled = true;
   $('btn-submit').disabled = true;
   $('answer-wrap').classList.add('hidden');
   $('answer-submitted-msg').classList.remove('hidden');
 
-  socket.emit('game:submit', { answer }, res => {
+  socket.emit('game:submit', { answer, wpm }, res => {
     if (!res.success) {
       showError('landing-error', res.error || 'Submit failed');
       // allow re-submit
@@ -393,6 +402,7 @@ socket.on('game:round-result', ({ word, results, scores, lives }) => {
       <div class="result-info">
         <div class="result-pname">${escHtml(r.playerName)}${isMe ? ' <span style="color:var(--accent);font-size:.75rem">(you)</span>' : ''}</div>
         <div class="result-answer"><span class="${answerClass}">${escHtml(r.answer || '(no answer)')}</span></div>
+        ${state.config.showWpm && r.wpm != null ? `<div class="wpm-tag">⚡ ${r.wpm} WPM</div>` : ''}
       </div>
     `;
     container.appendChild(card);

@@ -273,10 +273,10 @@ io.on('connection', (socket) => {
     await startNextRound(room);
   });
 
-  socket.on('game:submit', ({ answer }, cb) => {
+  socket.on('game:submit', ({ answer, wpm }, cb) => {
     const room = roomManager.getRoomByPlayer(socket.id);
     if (!room) return cb({ success: false, error: 'Not in a room' });
-    const result = room.submitAnswer(socket.id, answer || '');
+    const result = room.submitAnswer(socket.id, answer || '', wpm ?? null);
     if (!result.success) return cb(result);
     cb({ success: true });
 

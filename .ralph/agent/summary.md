@@ -1,8 +1,8 @@
 # Loop Summary
 
 **Status:** Completed successfully
-**Iterations:** 4
-**Duration:** 25m 21s
+**Iterations:** 1
+**Duration:** 2m 4s
 
 ## Tasks
 
@@ -14,4 +14,4 @@ _No events recorded._
 
 ## Final Commit
 
-8e989d1: Fix socket.io 404: explicit Express route + Dockerfile prepare step
+f9f610b: fix(docker): use --ignore-scripts with npm ci to prevent premature prepare hook

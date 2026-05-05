@@ -2,7 +2,7 @@
 
 **Status:** Completed successfully
 **Iterations:** 2
-**Duration:** 11m 20s
+**Duration:** 17m 32s
 
 ## Tasks
 
@@ -14,4 +14,4 @@ _No events recorded._
 
 ## Final Commit
 
-f15e663: feat: multiplayer up to 8 players, WebRTC voice chat, text chat sidebar
+1d0ff9c: fix: address UI glitches and add background presets

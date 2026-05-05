@@ -323,11 +323,29 @@ select { cursor: pointer; }
 /* ── Answer input ───────────────────────────────────────────────────────── */
 .answer-wrap {
   display: flex; gap: .5rem; width: 100%;
+  position: relative;
 }
 .answer-wrap input {
   flex: 1;
   font-size: 1.1rem;
   letter-spacing: .05em;
+  padding-right: 4.5rem; /* Space for WPM indicator */
+}
+.wpm-live-indicator {
+  position: absolute;
+  right: 6.5rem; /* Positioned inside input before submit button */
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--primary);
+  pointer-events: none;
+  background: var(--surface2);
+  padding: 0.15rem 0.3rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  opacity: 0.9;
+  z-index: 5;
 }
 .answer-wrap .btn { white-space: nowrap; }
 
@@ -382,6 +400,17 @@ select { cursor: pointer; }
 }
 .score-summary.large { padding: 1rem 2rem; }
 .score-item { text-align: center; }
+.stats-row {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-top: 0.25rem;
+}
+.stat-label {
+  font-weight: 600;
+  color: var(--accent);
+  margin-left: 0.4rem;
+}
+.stat-label:first-child { margin-left: 0; }
 .score-item .sname { font-size: .8rem; color: var(--text-dim); }
 .score-item .sval  { font-size: 1.8rem; font-weight: 800; color: var(--primary); }
 .score-item .slives { font-size: .85rem; }
@@ -447,6 +476,23 @@ select { cursor: pointer; }
   border-radius: 50%;
 }
 .voice-active { border-color: var(--success) !important; color: var(--success) !important; }
+
+.voice-indicator {
+  background: var(--primary);
+  color: #000;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  animation: pulseIndicator 1.5s infinite;
+  white-space: nowrap;
+}
+
+@keyframes pulseIndicator {
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.8; }
+}
 
 /* ── Scores container (N-player) ────────────────────────────────────────── */
 .scores-container {

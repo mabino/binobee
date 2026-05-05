@@ -340,13 +340,25 @@ io.on('connection', (socket) => {
   socket.on('voice:join', () => {
     const room = roomManager.getRoomByPlayer(socket.id);
     if (!room) return;
+    room.setPlayerVoiceState(socket.id, true, true); // Default to muted on join
     socket.to(room.code).emit('voice:peer-joined', { peerId: socket.id });
+    io.to(room.code).emit('room:updated', room.toPublic());
   });
 
   socket.on('voice:leave', () => {
     const room = roomManager.getRoomByPlayer(socket.id);
     if (!room) return;
+    room.setPlayerVoiceState(socket.id, false, true);
     socket.to(room.code).emit('voice:peer-left', { peerId: socket.id });
+    io.to(room.code).emit('room:updated', room.toPublic());
+  });
+
+  socket.on('voice:mute-status', ({ isMuted }) => {
+    const room = roomManager.getRoomByPlayer(socket.id);
+    if (!room) return;
+    room.setPlayerVoiceState(socket.id, true, isMuted);
+    socket.to(room.code).emit('voice:mute-status', { peerId: socket.id, isMuted });
+    io.to(room.code).emit('room:updated', room.toPublic());
   });
 
   socket.on('webrtc:offer', ({ targetId, offer }) => {

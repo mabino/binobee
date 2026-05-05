@@ -28,7 +28,14 @@ class Room {
   }
 
   _makePlayer(id, name) {
-    return { id, name, score: 0, lives: 3, answer: null, answeredAt: null, wpm: null, rematch: false };
+    return { id, name, score: 0, lives: 3, answer: null, answeredAt: null, wpm: null, wpms: [], rematch: false, voiceEnabled: false, isMuted: true };
+  }
+
+  setPlayerVoiceState(id, enabled, muted) {
+    if (this.players[id]) {
+      this.players[id].voiceEnabled = enabled;
+      this.players[id].isMuted = muted;
+    }
   }
 
   setConfig(cfg) {
@@ -77,6 +84,7 @@ class Room {
       p.answer = null;
       p.answeredAt = null;
       p.rematch = false;
+      p.wpms = [];
     }
   }
 
@@ -110,6 +118,9 @@ class Room {
     this.players[playerId].answer = String(answer).trim().toLowerCase();
     this.players[playerId].answeredAt = Date.now();
     this.players[playerId].wpm = (typeof wpm === 'number' && wpm >= 0) ? Math.round(wpm) : null;
+    if (this.players[playerId].wpm !== null) {
+      this.players[playerId].wpms.push(this.players[playerId].wpm);
+    }
     return { success: true };
   }
 
@@ -189,7 +200,11 @@ class Room {
 
   getScores() {
     const out = {};
-    for (const [id, p] of Object.entries(this.players)) out[id] = { id, name: p.name, score: p.score };
+    for (const [id, p] of Object.entries(this.players)) {
+      const avgWpm = p.wpms.length > 0 ? Math.round(p.wpms.reduce((a, b) => a + b, 0) / p.wpms.length) : 0;
+      const bestWpm = p.wpms.length > 0 ? Math.max(...p.wpms) : 0;
+      out[id] = { id, name: p.name, score: p.score, avgWpm, bestWpm };
+    }
     return out;
   }
 
@@ -203,7 +218,12 @@ class Room {
     return {
       code: this.code,
       hostId: this.hostId,
-      players: Object.values(this.players).map(p => ({ id: p.id, name: p.name })),
+      players: Object.values(this.players).map(p => ({
+        id: p.id,
+        name: p.name,
+        voiceEnabled: p.voiceEnabled,
+        isMuted: p.isMuted
+      })),
       config: this.config,
       phase: this.phase
     };

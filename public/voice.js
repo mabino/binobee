@@ -57,6 +57,7 @@
       if (isMuted) localStream.getAudioTracks().forEach(t => { t.enabled = false; });
       isEnabled = true;
       socket.emit('voice:join');
+      socket.emit('voice:mute-status', { isMuted });
       return true;
     } catch (err) {
       console.warn('[Voice] Failed to get microphone:', err.message);
@@ -66,7 +67,10 @@
 
   function disable(socket) {
     isEnabled = false;
-    if (socket) socket.emit('voice:leave');
+    if (socket) {
+      socket.emit('voice:mute-status', { isMuted: true }); // Assume muted on leave
+      socket.emit('voice:leave');
+    }
     if (localStream) {
       localStream.getTracks().forEach(t => t.stop());
       localStream = null;
@@ -79,6 +83,7 @@
     if (localStream) {
       localStream.getAudioTracks().forEach(t => { t.enabled = !isMuted; });
     }
+    if (_socket) _socket.emit('voice:mute-status', { isMuted });
     return isMuted;
   }
 

@@ -12,7 +12,8 @@ const state = {
   config: {},
   timerMax: 5,
   currentWord: null,   // for TTS only; never displayed
-  submitted: false
+  submitted: false,
+  peerMuteState: {}   // peerId -> isMuted
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -222,6 +223,15 @@ socket.on('room:updated', room => {
   if (document.getElementById('screen-lobby').classList.contains('active')) {
     renderLobby();
   }
+  
+  // Sync voice state
+  state.peerMuteState = {};
+  room.players.forEach(p => {
+    if (p.id !== socket.id && p.voiceEnabled) {
+      state.peerMuteState[p.id] = p.isMuted;
+    }
+  });
+  checkVoiceIndicator();
 });
 
 socket.on('room:player-left', ({ playerName }) => {
@@ -322,6 +332,7 @@ socket.on('game:round-start', data => {
   $('answer-wrap').classList.remove('hidden');
   $('answer-submitted-msg').classList.add('hidden');
   $('opponent-submitted-msg').classList.add('hidden');
+  $('wpm-live').classList.add('hidden');
 
   // Timer reset
   setTimer(data.timerSeconds, data.timerSeconds);
@@ -330,6 +341,7 @@ socket.on('game:round-start', data => {
   setTimeout(() => tts.speak(data.ttsWord), 300);
 
   showScreen('game');
+  $('answer-input').focus();
 });
 
 function updateScoreBoxes(scores, lives, mode) {
@@ -362,6 +374,28 @@ function setTimer(left, max) {
   const wrap = $('screen-game').querySelector('.timer-wrap');
   wrap.classList.toggle('timer-urgent', urgent);
 }
+
+function updateLiveWpm(inputId, displayId, startTime) {
+  const input = $(inputId);
+  const display = $(displayId);
+  const text = input.value.trim();
+  if (!text || !startTime) {
+    display.classList.add('hidden');
+    return;
+  }
+  const elapsedMs = Date.now() - startTime;
+  if (elapsedMs < 500) return; // Wait for a small amount of typing
+  
+  const wpm = Math.min(300, Math.round((text.length / 5) / (elapsedMs / 60000)));
+  display.textContent = `${wpm} WPM`;
+  display.classList.remove('hidden');
+}
+
+$('answer-input').addEventListener('input', () => {
+  if (state.config.showWpm) {
+    updateLiveWpm('answer-input', 'wpm-live', roundStartTime);
+  }
+});
 
 // ── Answer submission ──────────────────────────────────────────────────────
 $('btn-submit').addEventListener('click', submitAnswer);
@@ -493,6 +527,12 @@ socket.on('game:over', ({ winner, scores, lives, reason }) => {
     <div class="score-item">
       <div class="sname">${escHtml(p.name)}${p.id === state.myId ? ' (you)' : ''}</div>
       <div class="sval">${p.score}</div>
+      ${state.config.showWpm ? `
+        <div class="stats-row">
+          <span class="stat-label">Avg:</span> ${p.avgWpm} ⚡
+          <span class="stat-label">Best:</span> ${p.bestWpm} ⚡
+        </div>
+      ` : ''}
       ${mode === 'sudden-death' && lives?.[p.id]?.lives != null ? `<div class="slives">${'❤️'.repeat(Math.max(0, lives[p.id].lives))}</div>` : ''}
     </div>
   `).join('');
@@ -564,6 +604,7 @@ async function handleVoiceBtnClick() {
     VoiceChat.toggleMute();
   }
   updateVoiceBtns();
+  checkVoiceIndicator();
 }
 
 $('btn-voice').addEventListener('click', handleVoiceBtnClick);
@@ -576,7 +617,24 @@ socket.on('voice:peer-joined', ({ peerId }) => {
 
 socket.on('voice:peer-left', ({ peerId }) => {
   VoiceChat.removePeer(peerId);
+  delete state.peerMuteState[peerId];
+  checkVoiceIndicator();
 });
+
+socket.on('voice:mute-status', ({ peerId, isMuted }) => {
+  state.peerMuteState[peerId] = isMuted;
+  checkVoiceIndicator();
+});
+
+function checkVoiceIndicator() {
+  const someoneUnmuted = Object.values(state.peerMuteState).some(muted => !muted);
+  const showPrompt = someoneUnmuted && !VoiceChat.isEnabled;
+  
+  const indicators = document.querySelectorAll('.voice-indicator');
+  indicators.forEach(el => {
+    el.classList.toggle('hidden', !showPrompt);
+  });
+}
 
 socket.on('webrtc:offer', ({ fromId, offer }) => {
   VoiceChat.handleOffer(fromId, offer);
@@ -615,7 +673,9 @@ const practice = {
   currentWord: null,
   timerInterval: null,
   timeLeft: 0,
-  submitted: false
+  submitted: false,
+  roundStartTime: null,
+  wpms: []
 };
 
 // ── Landing: open / close practice config ──────────────────────────────────
@@ -642,6 +702,7 @@ $('btn-practice-start').addEventListener('click', () => {
   practice.score       = 0;
   practice.streak      = 0;
   practice.bestStreak  = 0;
+  practice.wpms        = [];
   $('practice-config').classList.add('hidden');
   $('main-actions').classList.remove('hidden');
   startPracticeRound();
@@ -651,6 +712,7 @@ $('btn-practice-start').addEventListener('click', () => {
 async function startPracticeRound() {
   practice.submitted = false;
   practice.wordCount++;
+  practice.roundStartTime = Date.now();
 
   const label = practice.maxWords > 0
     ? `Word ${practice.wordCount} / ${practice.maxWords}`
@@ -663,6 +725,7 @@ async function startPracticeRound() {
   $('practice-answer-input').disabled  = false;
   $('practice-btn-submit').disabled    = false;
   $('practice-answer-wrap').classList.remove('hidden');
+  $('practice-wpm-live').classList.add('hidden');
   $('practice-feedback').classList.add('hidden');
   $('practice-clue-definition').textContent = 'Loading…';
   $('practice-clue-pos').textContent        = '';
@@ -738,6 +801,9 @@ function setPracticeTimerUI(left, max) {
 
 // ── Practice submit & feedback ─────────────────────────────────────────────
 $('practice-btn-submit').addEventListener('click', () => submitPracticeAnswer(false));
+$('practice-answer-input').addEventListener('input', () => {
+  updateLiveWpm('practice-answer-input', 'practice-wpm-live', practice.roundStartTime);
+});
 $('practice-answer-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') submitPracticeAnswer(false);
 });
@@ -763,6 +829,12 @@ function submitPracticeAnswer(timedOut) {
   $('practice-answer-input').disabled = true;
   $('practice-btn-submit').disabled   = true;
   $('practice-answer-wrap').classList.add('hidden');
+
+  const elapsedMs = practice.roundStartTime ? Date.now() - practice.roundStartTime : 0;
+  const wpm = (elapsedMs > 0 && answer.length > 0)
+    ? Math.min(300, Math.round((answer.length / 5) / (elapsedMs / 60000)))
+    : null;
+  if (wpm !== null) practice.wpms.push(wpm);
 
   const correct   = practice.currentWord.word.toLowerCase();
   const isCorrect = answer.toLowerCase() === correct;
@@ -827,6 +899,11 @@ function endPractice() {
     ? `${practice.score} / ${practice.maxWords}`
     : `${practice.score} / ${attempted}`;
 
+  const avgWpm = practice.wpms.length > 0
+    ? Math.round(practice.wpms.reduce((a, b) => a + b, 0) / practice.wpms.length)
+    : 0;
+  const bestWpm = practice.wpms.length > 0 ? Math.max(...practice.wpms) : 0;
+
   $('practice-over-stats').innerHTML = `
     <div class="score-item">
       <div class="sname">Words Correct</div>
@@ -839,6 +916,14 @@ function endPractice() {
     <div class="score-item">
       <div class="sname">Best Streak 🔥</div>
       <div class="sval">${practice.bestStreak}</div>
+    </div>
+    <div class="score-item">
+      <div class="sname">Avg WPM ⚡</div>
+      <div class="sval">${avgWpm}</div>
+    </div>
+    <div class="score-item">
+      <div class="sname">Best WPM ⚡</div>
+      <div class="sval">${bestWpm}</div>
     </div>
   `;
 

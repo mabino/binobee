@@ -439,7 +439,7 @@ describe('Room.getScores', () => {
     const room = startedRoom();
     room.players['host-1'].score = 4;
     const scores = room.getScores();
-    expect(scores['host-1']).toEqual({ id: 'host-1', name: 'Alice', score: 4 });
+    expect(scores['host-1']).toEqual({ id: 'host-1', name: 'Alice', score: 4, avgWpm: 0, bestWpm: 0 });
   });
 });
 

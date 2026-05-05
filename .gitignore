@@ -4,3 +4,7 @@ npm-debug.log*
 .DS_Store
 *.log
 public/socket.io/
+ralph.yml
+PROMPT.md
+.ralph/
+ralph_tmp/

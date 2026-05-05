@@ -1,6 +1,6 @@
 Address the following issues with the game and improve it as well:
-	- Make sure the background picker icon doesn't obscure the chat
-	- Make sure connecting via audio for chat is also available in the lobby
-	- Make the lobby the Game Lobbee, other bee puns throughout the interface
+	- Make the stars background look more like a starfield instead of a dot grid
+	- Brighten the Bubbles, Aurora, Waves, and Gradient backgrounds
+	- Make the Circuit have random, racing electricity animation
 
 Task is complete when these are ready for human review and testing. 

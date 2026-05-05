@@ -742,6 +742,17 @@ $('practice-answer-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') submitPracticeAnswer(false);
 });
 
+// Allow Enter key to advance to next word when feedback is shown
+window.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const feedbackVisible = !$('practice-feedback').classList.contains('hidden');
+    const practiceActive = $('screen-practice').classList.contains('active');
+    if (practiceActive && feedbackVisible) {
+      $('practice-btn-next').click();
+    }
+  }
+});
+
 function submitPracticeAnswer(timedOut) {
   if (practice.submitted || !practice.currentWord) return;
   const answer = timedOut ? '' : $('practice-answer-input').value.trim();

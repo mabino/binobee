@@ -10,7 +10,7 @@ const state = {
   myName: '',
   room: null,
   config: {},
-  timerMax: 30,
+  timerMax: 5,
   currentWord: null,   // for TTS only; never displayed
   submitted: false
 };
@@ -606,7 +606,7 @@ socket.on('disconnect', () => {
 const practice = {
   playerName: '',
   difficulty: 'mixed',
-  timerSeconds: 30,
+  timerSeconds: 5,
   maxWords: 10,
   wordCount: 0,
   score: 0,

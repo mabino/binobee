@@ -548,23 +548,24 @@ select { cursor: pointer; }
   100% { background-position: 15% 30%, 65% 18%, 35% 75%, 73% 65%, 55% 75%; }
 }
 
-/* Hex Grid */
+/* Bee Hive (Hex Grid) */
 [data-bg="hex"]::before {
   content: '';
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
+  background-color: rgba(20, 15, 0, 0.4);
   background-image:
-    linear-gradient(30deg,  rgba(249,199,79,.07) 12%, transparent 12.5%, transparent 87%, rgba(249,199,79,.07) 87.5%),
-    linear-gradient(150deg, rgba(249,199,79,.07) 12%, transparent 12.5%, transparent 87%, rgba(249,199,79,.07) 87.5%),
-    linear-gradient(30deg,  rgba(249,199,79,.07) 12%, transparent 12.5%, transparent 87%, rgba(249,199,79,.07) 87.5%),
-    linear-gradient(150deg, rgba(249,199,79,.07) 12%, transparent 12.5%, transparent 87%, rgba(249,199,79,.07) 87.5%),
-    linear-gradient(60deg,  rgba(249,199,79,.10) 25%, transparent 25.5%, transparent 75%, rgba(249,199,79,.10) 75%),
-    linear-gradient(60deg,  rgba(249,199,79,.10) 25%, transparent 25.5%, transparent 75%, rgba(249,199,79,.10) 75%);
+    linear-gradient(30deg,  rgba(249,199,79,.15) 12%, transparent 12.5%, transparent 87%, rgba(249,199,79,.15) 87.5%),
+    linear-gradient(150deg, rgba(249,199,79,.15) 12%, transparent 12.5%, transparent 87%, rgba(249,199,79,.15) 87.5%),
+    linear-gradient(30deg,  rgba(249,199,79,.15) 12%, transparent 12.5%, transparent 87%, rgba(249,199,79,.15) 87.5%),
+    linear-gradient(150deg, rgba(249,199,79,.15) 12%, transparent 12.5%, transparent 87%, rgba(249,199,79,.15) 87.5%),
+    linear-gradient(60deg,  rgba(249,199,79,.20) 25%, transparent 25.5%, transparent 75%, rgba(249,199,79,.20) 75%),
+    linear-gradient(60deg,  rgba(249,199,79,.20) 25%, transparent 25.5%, transparent 75%, rgba(249,199,79,.20) 75%);
   background-size: 50px 88px;
   background-position: 0 0, 0 0, 25px 44px, 25px 44px, 0 0, 25px 44px;
-  animation: bgHexDrift 20s linear infinite;
+  animation: bgHexDrift 30s linear infinite;
 }
 @keyframes bgHexDrift {
   from { background-position: 0 0, 0 0, 25px 44px, 25px 44px, 0 0, 25px 44px; }
@@ -598,9 +599,9 @@ select { cursor: pointer; }
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 180% 35% at 50% 115%, rgba(249,199,79,.72), transparent 60%),
-    radial-gradient(ellipse 160% 28% at 50% 108%, rgba(244,162,97,.62), transparent 60%),
-    radial-gradient(ellipse 140% 22% at 50% 102%, rgba(144,190,109,.52), transparent 60%);
+    radial-gradient(ellipse 180% 35% at 50% 115%, rgba(0,119,190,.60), transparent 70%),
+    radial-gradient(ellipse 160% 28% at 50% 108%, rgba(0,168,204,.50), transparent 70%),
+    radial-gradient(ellipse 140% 22% at 50% 102%, rgba(34,87,122,.40), transparent 70%);
   animation: bgWavesRise 7s ease-in-out infinite alternate;
 }
 @keyframes bgWavesRise {
@@ -618,16 +619,18 @@ select { cursor: pointer; }
   pointer-events: none;
   border-radius: 50%;
   background: conic-gradient(
-    from 0deg at 35% 45%,
-    rgba(249,199,79,.72),
-    rgba(244,162,97,.68),
-    rgba(120,60,240,.80),
-    rgba(50,110,240,.76),
-    rgba(40,195,110,.64),
-    rgba(249,199,79,.72)
+    from 0deg at 50% 50%,
+    rgba(255,0,0,.6),
+    rgba(255,165,0,.6),
+    rgba(255,255,0,.6),
+    rgba(0,128,0,.6),
+    rgba(0,0,255,.6),
+    rgba(75,0,130,.6),
+    rgba(238,130,238,.6),
+    rgba(255,0,0,.6)
   );
-  filter: blur(50px);
-  animation: bgGradientSpin 18s linear infinite;
+  filter: blur(80px);
+  animation: bgGradientSpin 12s linear infinite;
 }
 @keyframes bgGradientSpin {
   from { transform: rotate(0deg)   scale(1.6); }

@@ -52,15 +52,16 @@
         </select>
         <label>Timer per word</label>
         <select id="practice-timer-setting">
-          <option value="30">30 seconds</option>
           <option value="15">15 seconds</option>
-          <option value="60">60 seconds</option>
+          <option value="10">10 seconds</option>
+          <option value="5" selected>5 seconds</option>
           <option value="0">No timer</option>
         </select>
         <label>Number of words</label>
         <select id="practice-wordcount">
           <option value="10">10 words</option>
-          <option value="20">20 words</option>
+          <option value="25">25 words</option>
+          <option value="50">50 words</option>
           <option value="0">Unlimited</option>
         </select>
         <button id="btn-practice-start" class="btn btn-primary btn-lg">Start Practice 🚀</button>
@@ -108,8 +109,8 @@
         <input id="cfg-points-to-win" type="range" min="3" max="20" value="5" />
       </div>
 
-      <label>Timer: <strong id="timer-val">30</strong>s</label>
-      <input id="cfg-timer" type="range" min="10" max="90" value="30" />
+      <label>Timer: <strong id="timer-val">5</strong>s</label>
+      <input id="cfg-timer" type="range" min="5" max="90" value="5" />
 
       <label>Difficulty</label>
       <select id="cfg-difficulty">
@@ -286,7 +287,7 @@
       <button class="bg-preset" data-bg="none">● None</button>
       <button class="bg-preset" data-bg="stars">✨ Stars</button>
       <button class="bg-preset" data-bg="bubbles">🫧 Bubbles</button>
-      <button class="bg-preset" data-bg="hex">⬡ Hex Grid</button>
+      <button class="bg-preset" data-bg="hex">⬡ Bee Hive</button>
       <button class="bg-preset" data-bg="aurora">🌌 Aurora</button>
       <button class="bg-preset" data-bg="waves">🌊 Waves</button>
       <button class="bg-preset" data-bg="gradient">🌈 Gradient</button>

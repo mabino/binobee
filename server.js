@@ -81,6 +81,18 @@ app.post('/api/tts', async (req, res) => {
   res.status(400).json({ error: 'Unknown TTS provider' });
 });
 
+// ─── Practice mode — single-word REST endpoint ────────────────────────────────
+app.get('/api/practice/word', async (req, res) => {
+  const difficulty = ['easy', 'medium', 'hard', 'mixed'].includes(req.query.difficulty)
+    ? req.query.difficulty : 'mixed';
+  try {
+    const wordData = await dictionary.getRandomWord({ difficulty, customDictionary: null });
+    res.json(wordData);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch word' });
+  }
+});
+
 // ─── Timer helpers ────────────────────────────────────────────────────────────
 
 function clearRoomTimers(roomCode) {

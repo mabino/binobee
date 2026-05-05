@@ -171,6 +171,7 @@ $('cfg-max-rounds').addEventListener('input', syncConfig);
 $('cfg-points-to-win').addEventListener('input', syncConfig);
 $('cfg-timer').addEventListener('input', syncConfig);
 $('cfg-difficulty').addEventListener('change', syncConfig);
+$('cfg-show-wpm').addEventListener('change', syncConfig);
 
 // ── Dictionary upload ──────────────────────────────────────────────────────
 $('btn-upload-dict').addEventListener('click', () => {
@@ -599,8 +600,253 @@ socket.on('disconnect', () => {
 });
 
 // ══════════════════════════════════════════════════════════════════════════
-//  CANVAS BACKGROUND: STARFIELD
+//  PRACTICE MODE — Single-player spelling practice (no room required)
 // ══════════════════════════════════════════════════════════════════════════
+
+const practice = {
+  playerName: '',
+  difficulty: 'mixed',
+  timerSeconds: 30,
+  maxWords: 10,
+  wordCount: 0,
+  score: 0,
+  streak: 0,
+  bestStreak: 0,
+  currentWord: null,
+  timerInterval: null,
+  timeLeft: 0,
+  submitted: false
+};
+
+// ── Landing: open / close practice config ──────────────────────────────────
+$('btn-practice').addEventListener('click', () => {
+  $('main-actions').classList.add('hidden');
+  $('join-form').classList.add('hidden');
+  $('practice-config').classList.remove('hidden');
+  $('landing-error').classList.add('hidden');
+});
+
+$('btn-practice-cancel').addEventListener('click', () => {
+  $('practice-config').classList.add('hidden');
+  $('main-actions').classList.remove('hidden');
+});
+
+$('btn-practice-start').addEventListener('click', () => {
+  const name = $('player-name').value.trim();
+  if (!name) { showError('landing-error', 'Please enter your name.'); return; }
+  practice.playerName = name;
+  practice.difficulty  = $('practice-difficulty').value;
+  practice.timerSeconds = parseInt($('practice-timer-setting').value);
+  practice.maxWords    = parseInt($('practice-wordcount').value);
+  practice.wordCount   = 0;
+  practice.score       = 0;
+  practice.streak      = 0;
+  practice.bestStreak  = 0;
+  $('practice-config').classList.add('hidden');
+  $('main-actions').classList.remove('hidden');
+  startPracticeRound();
+});
+
+// ── Practice round lifecycle ───────────────────────────────────────────────
+async function startPracticeRound() {
+  practice.submitted = false;
+  practice.wordCount++;
+
+  const label = practice.maxWords > 0
+    ? `Word ${practice.wordCount} / ${practice.maxWords}`
+    : `Word ${practice.wordCount}`;
+  $('practice-word-label').textContent = label;
+  $('practice-score').textContent  = practice.score;
+  $('practice-streak').textContent = practice.streak;
+
+  $('practice-answer-input').value     = '';
+  $('practice-answer-input').disabled  = false;
+  $('practice-btn-submit').disabled    = false;
+  $('practice-answer-wrap').classList.remove('hidden');
+  $('practice-feedback').classList.add('hidden');
+  $('practice-clue-definition').textContent = 'Loading…';
+  $('practice-clue-pos').textContent        = '';
+  $('practice-clue-phonetic').textContent   = '';
+  $('practice-clue-example').classList.add('hidden');
+
+  if (practice.timerSeconds > 0) {
+    $('practice-timer-wrap').classList.remove('hidden');
+  } else {
+    $('practice-timer-wrap').classList.add('hidden');
+    clearPracticeTimer();
+  }
+
+  showScreen('practice');
+
+  let data;
+  try {
+    const res = await fetch(`/api/practice/word?difficulty=${practice.difficulty}`);
+    if (!res.ok) throw new Error('Network error');
+    data = await res.json();
+  } catch (_) {
+    showError('landing-error', 'Failed to load word. Check your connection.');
+    showScreen('landing');
+    return;
+  }
+
+  practice.currentWord = data;
+
+  $('practice-clue-pos').textContent        = data.partOfSpeech || '';
+  $('practice-clue-pos').style.display      = data.partOfSpeech ? '' : 'none';
+  $('practice-clue-phonetic').textContent   = data.phonetic || '';
+  $('practice-clue-definition').textContent = data.definition || '';
+  if (data.example) {
+    $('practice-clue-example').textContent = `"${data.example}"`;
+    $('practice-clue-example').classList.remove('hidden');
+  } else {
+    $('practice-clue-example').classList.add('hidden');
+  }
+
+  if (practice.timerSeconds > 0) startPracticeTimer(practice.timerSeconds);
+
+  setTimeout(() => tts.speak(data.word), 300);
+  $('practice-answer-input').focus();
+}
+
+function startPracticeTimer(seconds) {
+  clearPracticeTimer();
+  practice.timeLeft = seconds;
+  setPracticeTimerUI(seconds, seconds);
+  practice.timerInterval = setInterval(() => {
+    practice.timeLeft--;
+    setPracticeTimerUI(practice.timeLeft, seconds);
+    if (practice.timeLeft <= 0) {
+      clearPracticeTimer();
+      if (!practice.submitted) submitPracticeAnswer(true);
+    }
+  }, 1000);
+}
+
+function clearPracticeTimer() {
+  if (practice.timerInterval) {
+    clearInterval(practice.timerInterval);
+    practice.timerInterval = null;
+  }
+}
+
+function setPracticeTimerUI(left, max) {
+  $('practice-timer-num').textContent = Math.max(0, left);
+  const { offset, urgent } = calcTimerState(left, max);
+  $('practice-timer-ring-fg').style.strokeDashoffset = offset;
+  $('practice-timer-wrap').classList.toggle('timer-urgent', urgent);
+}
+
+// ── Practice submit & feedback ─────────────────────────────────────────────
+$('practice-btn-submit').addEventListener('click', () => submitPracticeAnswer(false));
+$('practice-answer-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') submitPracticeAnswer(false);
+});
+
+function submitPracticeAnswer(timedOut) {
+  if (practice.submitted || !practice.currentWord) return;
+  const answer = timedOut ? '' : $('practice-answer-input').value.trim();
+  if (!answer && !timedOut) return;
+
+  practice.submitted = true;
+  clearPracticeTimer();
+  $('practice-answer-input').disabled = true;
+  $('practice-btn-submit').disabled   = true;
+  $('practice-answer-wrap').classList.add('hidden');
+
+  const correct   = practice.currentWord.word.toLowerCase();
+  const isCorrect = answer.toLowerCase() === correct;
+
+  if (isCorrect) {
+    practice.score++;
+    practice.streak++;
+    if (practice.streak > practice.bestStreak) practice.bestStreak = practice.streak;
+  } else {
+    practice.streak = 0;
+  }
+
+  $('practice-score').textContent  = practice.score;
+  $('practice-streak').textContent = practice.streak;
+
+  const icon = timedOut ? '⏰' : (isCorrect ? '✅' : '❌');
+  const msg  = timedOut ? "Time's up!" : (isCorrect ? 'Correct!' : 'Not quite…');
+  $('practice-feedback-icon').textContent = `${icon} ${msg}`;
+  $('practice-feedback-word').textContent = correct;
+
+  const yourEl = $('practice-feedback-your');
+  if (timedOut && !answer) {
+    yourEl.textContent = '';
+  } else if (isCorrect) {
+    yourEl.innerHTML = `<span style="color:var(--success)">Perfect spelling!</span>`;
+  } else {
+    yourEl.innerHTML = `You wrote: <span style="color:var(--error);text-decoration:line-through;font-family:monospace">${escHtml(answer || '(nothing)')}</span>`;
+  }
+
+  const reachedMax = practice.maxWords > 0 && practice.wordCount >= practice.maxWords;
+  $('practice-btn-next').textContent = reachedMax ? 'See Results 🏆' : 'Next Word →';
+  $('practice-feedback').classList.remove('hidden');
+}
+
+$('practice-btn-next').addEventListener('click', () => {
+  const reachedMax = practice.maxWords > 0 && practice.wordCount >= practice.maxWords;
+  if (reachedMax) {
+    endPractice();
+  } else {
+    startPracticeRound();
+  }
+});
+
+$('practice-btn-hear').addEventListener('click', () => {
+  if (practice.currentWord) tts.speak(practice.currentWord.word);
+});
+
+$('practice-btn-stop').addEventListener('click', () => {
+  clearPracticeTimer();
+  tts.cancel();
+  endPractice();
+});
+
+function endPractice() {
+  clearPracticeTimer();
+  tts.cancel();
+
+  const total = practice.wordCount;
+  const attempted = practice.submitted ? total : total - 1;
+  const pct = attempted > 0 ? Math.round((practice.score / attempted) * 100) : 0;
+  const countLabel = practice.maxWords > 0
+    ? `${practice.score} / ${practice.maxWords}`
+    : `${practice.score} / ${attempted}`;
+
+  $('practice-over-stats').innerHTML = `
+    <div class="score-item">
+      <div class="sname">Words Correct</div>
+      <div class="sval">${countLabel}</div>
+    </div>
+    <div class="score-item">
+      <div class="sname">Accuracy</div>
+      <div class="sval">${pct}%</div>
+    </div>
+    <div class="score-item">
+      <div class="sname">Best Streak 🔥</div>
+      <div class="sval">${practice.bestStreak}</div>
+    </div>
+  `;
+
+  showScreen('practice-over');
+}
+
+$('practice-btn-again').addEventListener('click', () => {
+  $('practice-config').classList.remove('hidden');
+  $('main-actions').classList.add('hidden');
+  showScreen('landing');
+});
+
+$('practice-btn-home').addEventListener('click', () => {
+  $('practice-config').classList.add('hidden');
+  $('main-actions').classList.remove('hidden');
+  showScreen('landing');
+});
+
+
 function initStarsCanvas() {
   const canvas = document.createElement('canvas');
   canvas.id = 'bg-canvas';

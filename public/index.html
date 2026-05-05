@@ -32,12 +32,39 @@
         <button id="btn-create" class="btn btn-primary">Start a Hive</button>
         <button id="btn-join-toggle" class="btn btn-secondary">Join a Hive</button>
       </div>
+      <button id="btn-practice" class="btn btn-secondary" style="width:100%;margin-top:.25rem">Practice Solo 🎯</button>
       <div id="join-form" class="hidden">
         <button id="btn-join-back" class="btn btn-ghost btn-sm" style="align-self:flex-start;padding-left:0">← Back</button>
         <label for="room-code-input">Hive code</label>
         <input id="room-code-input" type="text" maxlength="6" placeholder="XXXXXX" autocomplete="off"
                style="text-transform:uppercase;letter-spacing:.2em" />
         <button id="btn-join" class="btn btn-primary" style="margin-top:.5rem;width:100%">Buzz In</button>
+      </div>
+      <!-- Practice config (shown when Practice Solo is clicked) -->
+      <div id="practice-config" class="card config-card hidden">
+        <h3>🎯 Practice Settings</h3>
+        <label>Difficulty</label>
+        <select id="practice-difficulty">
+          <option value="mixed">Mixed</option>
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+        <label>Timer per word</label>
+        <select id="practice-timer-setting">
+          <option value="30">30 seconds</option>
+          <option value="15">15 seconds</option>
+          <option value="60">60 seconds</option>
+          <option value="0">No timer</option>
+        </select>
+        <label>Number of words</label>
+        <select id="practice-wordcount">
+          <option value="10">10 words</option>
+          <option value="20">20 words</option>
+          <option value="0">Unlimited</option>
+        </select>
+        <button id="btn-practice-start" class="btn btn-primary btn-lg">Start Practice 🚀</button>
+        <button id="btn-practice-cancel" class="btn btn-ghost btn-sm" style="align-self:flex-start">← Back</button>
       </div>
     </div>
     <div id="landing-error" class="error-msg hidden"></div>
@@ -181,6 +208,74 @@
       <button id="btn-leave-gameover" class="btn btn-ghost">Fly Away</button>
     </div>
     <p id="rematch-status" class="hint hidden"></p>
+  </div>
+
+  <!-- ─── Practice Mode ──────────────────────────────────────────── -->
+  <div id="screen-practice" class="screen">
+    <header class="game-header">
+      <div class="round-info">
+        <span id="practice-word-label">Word 1</span>
+        <div class="badge">🎯 Solo Practice</div>
+      </div>
+      <div class="scores-container">
+        <div class="score-box is-me">
+          <div class="score-name">Score</div>
+          <div class="score-val" id="practice-score">0</div>
+        </div>
+        <div class="score-box">
+          <div class="score-name">Streak 🔥</div>
+          <div class="score-val" id="practice-streak">0</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Timer (hidden when no-timer mode) -->
+    <div class="timer-wrap" id="practice-timer-wrap">
+      <svg class="timer-ring" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="44" class="ring-bg"/>
+        <circle cx="50" cy="50" r="44" class="ring-fg" id="practice-timer-ring-fg"/>
+      </svg>
+      <span id="practice-timer-num" class="timer-num">30</span>
+    </div>
+
+    <!-- Word clues -->
+    <div class="card clue-card">
+      <div class="clue-row">
+        <span id="practice-clue-pos" class="pos-badge"></span>
+        <span id="practice-clue-phonetic" class="phonetic"></span>
+        <button id="practice-btn-hear" class="btn-icon btn-tts" title="Hear the word">🔊</button>
+      </div>
+      <p id="practice-clue-definition" class="definition">Loading…</p>
+      <p id="practice-clue-example" class="example hidden"></p>
+    </div>
+
+    <!-- Answer input -->
+    <div id="practice-answer-wrap" class="answer-wrap">
+      <input id="practice-answer-input" type="text" autocomplete="off" autocorrect="off"
+             spellcheck="false" placeholder="Type your spelling…" />
+      <button id="practice-btn-submit" class="btn btn-primary">Submit</button>
+    </div>
+
+    <!-- Inline feedback after each word -->
+    <div id="practice-feedback" class="card hidden" style="text-align:center">
+      <div id="practice-feedback-icon" style="font-size:1.5rem;margin-bottom:.25rem"></div>
+      <div id="practice-feedback-word" class="revealed-word" style="font-size:2rem"></div>
+      <div id="practice-feedback-your" class="hint" style="margin-top:.4rem"></div>
+      <button id="practice-btn-next" class="btn btn-primary" style="margin-top:.75rem;width:100%">Next Word →</button>
+    </div>
+
+    <button id="practice-btn-stop" class="btn btn-ghost" style="margin-top:.5rem">⏹ Stop Practice</button>
+  </div>
+
+  <!-- ─── Practice Over ────────────────────────────────────────────── -->
+  <div id="screen-practice-over" class="screen">
+    <div class="logo">🎯</div>
+    <h2>Practice Complete!</h2>
+    <div id="practice-over-stats" class="score-summary large" style="flex-wrap:wrap;gap:.75rem 2rem"></div>
+    <div class="btn-group" style="margin-top:1.5rem">
+      <button id="practice-btn-again" class="btn btn-primary">Practice Again 🔄</button>
+      <button id="practice-btn-home" class="btn btn-ghost">Back to Menu</button>
+    </div>
   </div>
 
   <!-- ─── Background theme picker (floating) ─────────────────────────────── -->

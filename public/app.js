@@ -130,6 +130,12 @@ function renderPlayerList(players) {
 }
 
 // ── Lobby config controls ──────────────────────────────────────────────────
+// Guard: prevent syncConfig from emitting while we're applying a remote config update.
+// Without this, programmatic control changes (from applyConfigToControls) could
+// trigger syncConfig in browsers that fire change/input events on programmatic value sets,
+// causing a feedback loop that makes radio/select selections alternate rapidly.
+let _applyingConfig = false;
+
 function renderConfigUI() {
   const mode = document.querySelector('input[name="mode"]:checked')?.value || 'rounds';
   const maxRounds = parseInt($('cfg-max-rounds').value);
@@ -145,6 +151,7 @@ function renderConfigUI() {
 }
 
 function syncConfig() {
+  if (_applyingConfig) return;
   renderConfigUI();
 
   const mode = document.querySelector('input[name="mode"]:checked')?.value || 'rounds';
@@ -237,16 +244,21 @@ socket.on('game:dictionary-updated', ({ wordCount, custom }) => {
 });
 
 function applyConfigToControls(cfg) {
-  if (cfg.mode) {
-    const radio = document.querySelector(`input[name="mode"][value="${cfg.mode}"]`);
-    if (radio) radio.checked = true;
+  _applyingConfig = true;
+  try {
+    if (cfg.mode) {
+      const radio = document.querySelector(`input[name="mode"][value="${cfg.mode}"]`);
+      if (radio) radio.checked = true;
+    }
+    if (cfg.maxRounds != null)   $('cfg-max-rounds').value   = cfg.maxRounds;
+    if (cfg.pointsToWin != null) $('cfg-points-to-win').value = cfg.pointsToWin;
+    if (cfg.timerSeconds != null) $('cfg-timer').value        = cfg.timerSeconds;
+    if (cfg.difficulty)  $('cfg-difficulty').value            = cfg.difficulty;
+    if (cfg.showWpm != null) $('cfg-show-wpm').checked        = cfg.showWpm;
+    renderConfigUI(); // update labels/sections without emitting to server
+  } finally {
+    _applyingConfig = false;
   }
-  if (cfg.maxRounds != null)   $('cfg-max-rounds').value   = cfg.maxRounds;
-  if (cfg.pointsToWin != null) $('cfg-points-to-win').value = cfg.pointsToWin;
-  if (cfg.timerSeconds != null) $('cfg-timer').value        = cfg.timerSeconds;
-  if (cfg.difficulty)  $('cfg-difficulty').value            = cfg.difficulty;
-  if (cfg.showWpm != null) $('cfg-show-wpm').checked        = cfg.showWpm;
-  renderConfigUI(); // update labels/sections without emitting to server
 }
 
 // ══════════════════════════════════════════════════════════════════════════

@@ -82,11 +82,49 @@ input[type="text"]:focus, textarea:focus, select:focus {
 textarea { resize: vertical; font-size: .85rem; }
 input[type="range"] {
   -webkit-appearance: none;
+  appearance: none;
   width: 100%;
   height: 5px;
   background: var(--border);
   border-radius: 3px;
-  accent-color: var(--primary);
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 5px;
+  background: var(--border);
+  border-radius: 3px;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+  border: none;
+  margin-top: -6.5px;
+  box-shadow: 0 1px 6px rgba(0,0,0,.4);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 2px 10px rgba(249,199,79,.4);
+}
+input[type="range"]::-moz-range-track {
+  height: 5px;
+  background: var(--border);
+  border-radius: 3px;
+  border: none;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 1px 6px rgba(0,0,0,.4);
 }
 select { cursor: pointer; }
 
@@ -568,6 +606,70 @@ select { cursor: pointer; }
   0%   { transform: scale(1)    rotate(0deg);  opacity: 1; }
   50%  { transform: scale(1.12) rotate(3deg);  opacity: .8; }
   100% { transform: scale(1.06) rotate(-2deg); opacity: .9; }
+}
+
+/* Waves */
+[data-bg="waves"]::before {
+  content: '';
+  position: fixed;
+  inset: -60%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 180% 35% at 50% 115%, rgba(249,199,79,.18), transparent 60%),
+    radial-gradient(ellipse 160% 28% at 50% 108%, rgba(244,162,97,.14), transparent 60%),
+    radial-gradient(ellipse 140% 22% at 50% 102%, rgba(144,190,109,.10), transparent 60%);
+  animation: bgWavesRise 7s ease-in-out infinite alternate;
+}
+@keyframes bgWavesRise {
+  0%   { transform: translateY(0)   scaleX(1);    }
+  50%  { transform: translateY(-4%) scaleX(1.06); }
+  100% { transform: translateY(-9%) scaleX(.94);  }
+}
+
+/* Gradient */
+[data-bg="gradient"]::before {
+  content: '';
+  position: fixed;
+  inset: -50%;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg at 35% 45%,
+    rgba(249,199,79,.22),
+    rgba(244,162,97,.20),
+    rgba(59,34,110,.30),
+    rgba(34,59,110,.28),
+    rgba(34,100,65,.18),
+    rgba(249,199,79,.22)
+  );
+  filter: blur(50px);
+  animation: bgGradientSpin 18s linear infinite;
+}
+@keyframes bgGradientSpin {
+  from { transform: rotate(0deg)   scale(1.6); }
+  to   { transform: rotate(360deg) scale(1.6); }
+}
+
+/* Circuit */
+[data-bg="circuit"]::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(249,199,79,.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(249,199,79,.09) 1px, transparent 1px),
+    linear-gradient(rgba(249,199,79,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(249,199,79,.04) 1px, transparent 1px);
+  background-size: 75px 75px, 75px 75px, 15px 15px, 15px 15px;
+  animation: bgCircuitDrift 28s linear infinite;
+}
+@keyframes bgCircuitDrift {
+  from { background-position: 0 0,     0 0,     0 0,     0 0;     }
+  to   { background-position: 75px 75px, 75px 75px, 15px 15px, 15px 15px; }
 }
 
 /* ── Background picker (floating) ───────────────────────────────────────── */

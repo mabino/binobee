@@ -10,7 +10,7 @@
   <!-- ─── Chat Sidebar ─────────────────────────────────────────────────────── -->
   <div id="chat-sidebar" class="chat-sidebar hidden">
     <div class="chat-header">
-      <span>💬 Chat</span>
+      <span>💬 Buzz</span>
       <button id="btn-chat-close" class="btn-icon" title="Close chat">✕</button>
     </div>
     <div id="chat-messages" class="chat-messages"></div>
@@ -26,18 +26,18 @@
     <h1>Bino Bee</h1>
     <p class="tagline">The Spelling Bee for Binos (and Friends)</p>
     <div class="card">
-      <label for="player-name">Your name</label>
+      <label for="player-name">Your bee name</label>
       <input id="player-name" type="text" maxlength="20" placeholder="Enter your name…" autocomplete="off" />
       <div id="main-actions" class="btn-group">
-        <button id="btn-create" class="btn btn-primary">Create Room</button>
-        <button id="btn-join-toggle" class="btn btn-secondary">Join Room</button>
+        <button id="btn-create" class="btn btn-primary">Start a Hive</button>
+        <button id="btn-join-toggle" class="btn btn-secondary">Join a Hive</button>
       </div>
       <div id="join-form" class="hidden">
         <button id="btn-join-back" class="btn btn-ghost btn-sm" style="align-self:flex-start;padding-left:0">← Back</button>
-        <label for="room-code-input">Room code</label>
+        <label for="room-code-input">Hive code</label>
         <input id="room-code-input" type="text" maxlength="6" placeholder="XXXXXX" autocomplete="off"
                style="text-transform:uppercase;letter-spacing:.2em" />
-        <button id="btn-join" class="btn btn-primary" style="margin-top:.5rem;width:100%">Join</button>
+        <button id="btn-join" class="btn btn-primary" style="margin-top:.5rem;width:100%">Buzz In</button>
       </div>
     </div>
     <div id="landing-error" class="error-msg hidden"></div>
@@ -46,7 +46,7 @@
   <!-- ─── Lobby ─────────────────────────────────────────── -->
   <div id="screen-lobby" class="screen">
     <div class="logo">🐝</div>
-    <h2>Game Lobby</h2>
+    <h2>🐝 Game Lobbee</h2>
     <div class="room-code-display">
       <span class="label">Room Code</span>
       <span id="lobby-code" class="code">——</span>
@@ -57,12 +57,13 @@
 
     <!-- Chat + Voice toolbar -->
     <div class="toolbar-row">
-      <button id="btn-chat-lobby" class="btn btn-secondary btn-sm">💬 Chat</button>
+      <button id="btn-voice-lobby" class="btn btn-secondary btn-sm" title="Toggle voice chat">🎤 Voice</button>
+      <button id="btn-chat-lobby" class="btn btn-secondary btn-sm">💬 Buzz</button>
     </div>
 
     <!-- Config (host only) -->
     <div id="lobby-config" class="card config-card hidden">
-      <h3>⚙️ Game Settings</h3>
+      <h3>⚙️ Hive Settings</h3>
 
       <label>Game Mode</label>
       <div class="radio-group" id="mode-selector">
@@ -108,11 +109,10 @@
       </details>
     </div>
 
-    <!-- Non-host waiting message -->
-    <p id="lobby-waiting" class="hint hidden">Waiting for the host to start…</p>
+    <p id="lobby-waiting" class="hint hidden">Waiting for the host to bee-gin… 🐝</p>
 
-    <button id="btn-start" class="btn btn-primary btn-lg hidden">Start Game 🚀</button>
-    <button id="btn-leave-lobby" class="btn btn-ghost">Leave</button>
+    <button id="btn-start" class="btn btn-primary btn-lg hidden">Bee-gin! 🚀</button>
+    <button id="btn-leave-lobby" class="btn btn-ghost">Fly Away</button>
     <div id="lobby-error" class="error-msg hidden"></div>
   </div>
 
@@ -129,7 +129,7 @@
     <!-- Game toolbar: voice + chat -->
     <div class="toolbar-row">
       <button id="btn-voice" class="btn btn-secondary btn-sm" title="Toggle voice chat">🎤 Voice</button>
-      <button id="btn-chat-game" class="btn btn-secondary btn-sm">💬 Chat</button>
+      <button id="btn-chat-game" class="btn btn-secondary btn-sm">💬 Buzz</button>
     </div>
 
     <!-- Timer -->
@@ -167,7 +167,7 @@
     <h2 id="result-word" class="revealed-word"></h2>
     <div id="result-cards" class="result-cards"></div>
     <div id="result-scores" class="score-summary"></div>
-    <p class="hint">Next round starting…</p>
+    <p class="hint">Next round bee-gins… 🐝</p>
   </div>
 
   <!-- ─── Game Over ─────────────────────────────────────── -->
@@ -177,8 +177,8 @@
     <div id="gameover-scores" class="score-summary large"></div>
     <p id="gameover-reason" class="hint"></p>
     <div class="btn-group" style="margin-top:1.5rem">
-      <button id="btn-rematch" class="btn btn-primary">Play Again 🔄</button>
-      <button id="btn-leave-gameover" class="btn btn-ghost">Leave</button>
+      <button id="btn-rematch" class="btn btn-primary">Bee-play! 🔄</button>
+      <button id="btn-leave-gameover" class="btn btn-ghost">Fly Away</button>
     </div>
     <p id="rematch-status" class="hint hidden"></p>
   </div>

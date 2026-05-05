@@ -531,21 +531,42 @@ $('btn-leave-gameover').addEventListener('click', () => {
 // ══════════════════════════════════════════════════════════════════════════
 //  VOICE CHAT
 // ══════════════════════════════════════════════════════════════════════════
-$('btn-voice').addEventListener('click', async () => {
-  const btn = $('btn-voice');
+
+function updateVoiceBtns() {
+  const btns = [$('btn-voice'), $('btn-voice-lobby')];
+  if (VoiceChat.isEnabled) {
+    const label = VoiceChat.isMuted ? '🔇 Unmute' : '🎤 Mute';
+    btns.forEach(btn => {
+      if (!btn) return;
+      btn.textContent = label;
+      btn.classList.add('voice-active');
+    });
+  } else {
+    btns.forEach(btn => {
+      if (!btn) return;
+      btn.textContent = '🎤 Voice';
+      btn.classList.remove('voice-active');
+    });
+  }
+}
+
+async function handleVoiceBtnClick() {
   if (!VoiceChat.isEnabled) {
     const ok = await VoiceChat.enable(socket);
-    if (ok) {
-      btn.textContent = '🎤 Mute';
-      btn.classList.add('voice-active');
-    } else {
-      btn.textContent = '🎤 Denied';
+    if (!ok) {
+      [$('btn-voice'), $('btn-voice-lobby')].forEach(btn => {
+        if (btn) btn.textContent = '🎤 Denied';
+      });
+      return;
     }
   } else {
-    const muted = VoiceChat.toggleMute();
-    btn.textContent = muted ? '🔇 Unmute' : '🎤 Mute';
+    VoiceChat.toggleMute();
   }
-});
+  updateVoiceBtns();
+}
+
+$('btn-voice').addEventListener('click', handleVoiceBtnClick);
+$('btn-voice-lobby').addEventListener('click', handleVoiceBtnClick);
 
 // WebRTC socket events
 socket.on('voice:peer-joined', ({ peerId }) => {

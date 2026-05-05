@@ -524,25 +524,7 @@ select { cursor: pointer; }
 
 /* ── Animated background themes ─────────────────────────────────────────── */
 
-/* Stars */
-[data-bg="stars"]::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image:
-    radial-gradient(rgba(255,255,255,.6) 1px, transparent 1px),
-    radial-gradient(rgba(255,255,255,.35) 1px, transparent 1px),
-    radial-gradient(rgba(255,255,255,.15) 2px, transparent 2px);
-  background-size: 50px 50px, 90px 90px, 130px 130px;
-  background-position: 0 0, 15px 25px, 40px 60px;
-  animation: bgStarsDrift 25s linear infinite;
-}
-@keyframes bgStarsDrift {
-  0%   { background-position: 0 0,    15px 25px, 40px 60px; }
-  100% { background-position: 50px 50px, 65px 75px, 90px 110px; }
-}
+/* Stars — rendered by canvas in app.js */
 
 /* Bubbles */
 [data-bg="bubbles"]::before {
@@ -552,11 +534,11 @@ select { cursor: pointer; }
   z-index: -1;
   pointer-events: none;
   background-image:
-    radial-gradient(circle 40px at 50% 50%, rgba(249,199,79,.09), transparent),
-    radial-gradient(circle 65px at 50% 50%, rgba(244,162,97,.07), transparent),
-    radial-gradient(circle 28px at 50% 50%, rgba(144,190,109,.08), transparent),
-    radial-gradient(circle 55px at 50% 50%, rgba(249,199,79,.06), transparent),
-    radial-gradient(circle 38px at 50% 50%, rgba(244,162,97,.09), transparent);
+    radial-gradient(circle 40px at 50% 50%, rgba(249,199,79,.28), transparent),
+    radial-gradient(circle 65px at 50% 50%, rgba(244,162,97,.22), transparent),
+    radial-gradient(circle 28px at 50% 50%, rgba(144,190,109,.24), transparent),
+    radial-gradient(circle 55px at 50% 50%, rgba(249,199,79,.18), transparent),
+    radial-gradient(circle 38px at 50% 50%, rgba(244,162,97,.28), transparent);
   background-size: 220px 220px, 380px 380px, 160px 160px, 310px 310px, 200px 200px;
   background-position: 10% 20%, 60% 30%, 30% 70%, 78% 60%, 50% 82%;
   animation: bgBubblesFloat 14s ease-in-out infinite alternate;
@@ -597,15 +579,15 @@ select { cursor: pointer; }
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 80% 60% at 20% 30%, rgba(59,34,110,.55), transparent),
-    radial-gradient(ellipse 70% 50% at 80% 70%, rgba(34,59,110,.55), transparent),
-    radial-gradient(ellipse 60% 70% at 50% 50%, rgba(34,100,65,.30), transparent);
+    radial-gradient(ellipse 80% 60% at 20% 30%, rgba(100,50,200,.75), transparent),
+    radial-gradient(ellipse 70% 50% at 80% 70%, rgba(40,90,200,.75), transparent),
+    radial-gradient(ellipse 60% 70% at 50% 50%, rgba(30,160,90,.55), transparent);
   animation: bgAuroraShift 12s ease-in-out infinite alternate;
 }
 @keyframes bgAuroraShift {
   0%   { transform: scale(1)    rotate(0deg);  opacity: 1; }
-  50%  { transform: scale(1.12) rotate(3deg);  opacity: .8; }
-  100% { transform: scale(1.06) rotate(-2deg); opacity: .9; }
+  50%  { transform: scale(1.12) rotate(3deg);  opacity: .85; }
+  100% { transform: scale(1.06) rotate(-2deg); opacity: .95; }
 }
 
 /* Waves */
@@ -616,9 +598,9 @@ select { cursor: pointer; }
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 180% 35% at 50% 115%, rgba(249,199,79,.18), transparent 60%),
-    radial-gradient(ellipse 160% 28% at 50% 108%, rgba(244,162,97,.14), transparent 60%),
-    radial-gradient(ellipse 140% 22% at 50% 102%, rgba(144,190,109,.10), transparent 60%);
+    radial-gradient(ellipse 180% 35% at 50% 115%, rgba(249,199,79,.42), transparent 60%),
+    radial-gradient(ellipse 160% 28% at 50% 108%, rgba(244,162,97,.32), transparent 60%),
+    radial-gradient(ellipse 140% 22% at 50% 102%, rgba(144,190,109,.24), transparent 60%);
   animation: bgWavesRise 7s ease-in-out infinite alternate;
 }
 @keyframes bgWavesRise {
@@ -637,12 +619,12 @@ select { cursor: pointer; }
   border-radius: 50%;
   background: conic-gradient(
     from 0deg at 35% 45%,
-    rgba(249,199,79,.22),
-    rgba(244,162,97,.20),
-    rgba(59,34,110,.30),
-    rgba(34,59,110,.28),
-    rgba(34,100,65,.18),
-    rgba(249,199,79,.22)
+    rgba(249,199,79,.42),
+    rgba(244,162,97,.38),
+    rgba(100,50,200,.52),
+    rgba(40,90,200,.48),
+    rgba(30,160,90,.36),
+    rgba(249,199,79,.42)
   );
   filter: blur(50px);
   animation: bgGradientSpin 18s linear infinite;
@@ -652,25 +634,7 @@ select { cursor: pointer; }
   to   { transform: rotate(360deg) scale(1.6); }
 }
 
-/* Circuit */
-[data-bg="circuit"]::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image:
-    linear-gradient(rgba(249,199,79,.09) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(249,199,79,.09) 1px, transparent 1px),
-    linear-gradient(rgba(249,199,79,.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(249,199,79,.04) 1px, transparent 1px);
-  background-size: 75px 75px, 75px 75px, 15px 15px, 15px 15px;
-  animation: bgCircuitDrift 28s linear infinite;
-}
-@keyframes bgCircuitDrift {
-  from { background-position: 0 0,     0 0,     0 0,     0 0;     }
-  to   { background-position: 75px 75px, 75px 75px, 15px 15px, 15px 15px; }
-}
+/* Circuit — rendered by canvas in app.js */
 
 /* ── Background picker (floating) ───────────────────────────────────────── */
 .bg-picker {

@@ -599,12 +599,277 @@ socket.on('disconnect', () => {
 });
 
 // ══════════════════════════════════════════════════════════════════════════
+//  CANVAS BACKGROUND: STARFIELD
+// ══════════════════════════════════════════════════════════════════════════
+function initStarsCanvas() {
+  const canvas = document.createElement('canvas');
+  canvas.id = 'bg-canvas';
+  canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;';
+  document.body.insertBefore(canvas, document.body.firstChild);
+  const ctx = canvas.getContext('2d');
+
+  let animId;
+  let layers = [];
+
+  function genLayer(count, minR, maxR, speed, baseAlpha) {
+    const stars = [];
+    for (let i = 0; i < count; i++) {
+      const rnd = Math.random();
+      stars.push({
+        x: Math.random(),
+        y: Math.random(),
+        r: minR + Math.random() * (maxR - minR),
+        alpha: baseAlpha * (0.35 + Math.random() * 0.65),
+        twinkleSpeed: 0.4 + Math.random() * 2.0,
+        twinklePhase: Math.random() * Math.PI * 2,
+        color: rnd > 0.88 ? [180, 215, 255] : rnd > 0.76 ? [255, 228, 160] : [255, 255, 255],
+      });
+    }
+    return { stars, speed, offset: 0 };
+  }
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const area = canvas.width * canvas.height;
+    layers = [
+      genLayer(Math.floor(area / 4500), 0.25, 0.75, 0.10, 0.45),
+      genLayer(Math.floor(area / 7500), 0.50, 1.20, 0.20, 0.72),
+      genLayer(Math.floor(area / 14000), 0.90, 2.20, 0.34, 1.00),
+    ];
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+
+  let t = 0;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    t += 0.016;
+
+    for (const layer of layers) {
+      layer.offset = (layer.offset + layer.speed) % canvas.width;
+      for (const s of layer.stars) {
+        const x = (s.x * canvas.width + layer.offset) % canvas.width;
+        const y = s.y * canvas.height;
+        const twinkle = 0.55 + 0.45 * Math.sin(t * s.twinkleSpeed + s.twinklePhase);
+        const alpha = s.alpha * twinkle;
+        const [r, g, b] = s.color;
+
+        if (s.r > 1.1 && alpha > 0.45) {
+          const grd = ctx.createRadialGradient(x, y, s.r * 0.4, x, y, s.r * 4.5);
+          grd.addColorStop(0, `rgba(${r},${g},${b},${alpha})`);
+          grd.addColorStop(1, 'transparent');
+          ctx.beginPath();
+          ctx.arc(x, y, s.r * 4.5, 0, Math.PI * 2);
+          ctx.fillStyle = grd;
+          ctx.fill();
+        }
+
+        ctx.beginPath();
+        ctx.arc(x, y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
+        ctx.fill();
+      }
+    }
+
+    animId = requestAnimationFrame(draw);
+  }
+
+  draw();
+
+  return function destroy() {
+    cancelAnimationFrame(animId);
+    window.removeEventListener('resize', resize);
+    canvas.remove();
+  };
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  CANVAS BACKGROUND: CIRCUIT WITH RACING ELECTRICITY
+// ══════════════════════════════════════════════════════════════════════════
+function initCircuitCanvas() {
+  const canvas = document.createElement('canvas');
+  canvas.id = 'bg-canvas';
+  canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;';
+  document.body.insertBefore(canvas, document.body.firstChild);
+  const ctx = canvas.getContext('2d');
+
+  const GRID = 75;
+  const CA = [249, 199, 79];  // amber
+  const CW = [255, 242, 180]; // bright white-yellow
+
+  function rgba(c, a) { return `rgba(${c[0]},${c[1]},${c[2]},${a})`; }
+
+  let animId, gridW, gridH, bolts = [];
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    gridW = Math.ceil(canvas.width / GRID) + 2;
+    gridH = Math.ceil(canvas.height / GRID) + 2;
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+
+  function generatePath() {
+    const points = [{ x: Math.floor(Math.random() * gridW) * GRID, y: Math.floor(Math.random() * gridH) * GRID }];
+    let cx = points[0].x, cy = points[0].y, lastDir = null;
+    const numSeg = 2 + Math.floor(Math.random() * 5);
+    const DIRS = [{ dx: 1, dy: 0 }, { dx: -1, dy: 0 }, { dx: 0, dy: 1 }, { dx: 0, dy: -1 }];
+
+    for (let i = 0; i < numSeg; i++) {
+      let dirs = DIRS.filter(d => !lastDir || !(d.dx === -lastDir.dx && d.dy === -lastDir.dy));
+      const dir = dirs[Math.floor(Math.random() * dirs.length)];
+      const cells = 1 + Math.floor(Math.random() * 5);
+      cx += dir.dx * cells * GRID;
+      cy += dir.dy * cells * GRID;
+      points.push({ x: cx, y: cy });
+      lastDir = dir;
+    }
+    return points;
+  }
+
+  function pathLength(path) {
+    let len = 0;
+    for (let i = 1; i < path.length; i++) len += Math.hypot(path[i].x - path[i-1].x, path[i].y - path[i-1].y);
+    return len;
+  }
+
+  function posOnPath(path, pos) {
+    let rem = pos;
+    for (let i = 1; i < path.length; i++) {
+      const dx = path[i].x - path[i-1].x, dy = path[i].y - path[i-1].y;
+      const seg = Math.hypot(dx, dy);
+      if (rem <= seg) { const t = rem / seg; return { x: path[i-1].x + dx * t, y: path[i-1].y + dy * t }; }
+      rem -= seg;
+    }
+    return path[path.length - 1];
+  }
+
+  function buildTrailPath(b, tp, hp) {
+    ctx.beginPath();
+    let cumLen = 0, first = true;
+    for (let i = 1; i < b.path.length; i++) {
+      const prev = b.path[i-1], curr = b.path[i];
+      const dx = curr.x - prev.x, dy = curr.y - prev.y;
+      const seg = Math.hypot(dx, dy), segEnd = cumLen + seg;
+      if (segEnd < tp) { cumLen = segEnd; continue; }
+      if (cumLen > hp) break;
+      const t1 = Math.max(0, (tp - cumLen) / seg), t2 = Math.min(1, (hp - cumLen) / seg);
+      const x1 = prev.x + dx * t1, y1 = prev.y + dy * t1, x2 = prev.x + dx * t2, y2 = prev.y + dy * t2;
+      if (first) { ctx.moveTo(x1, y1); first = false; } else ctx.lineTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      cumLen = segEnd;
+    }
+  }
+
+  function spawnBolt() {
+    const path = generatePath();
+    bolts.push({ path, totalLen: pathLength(path), pos: 0, speed: 3 + Math.random() * 6, trailLen: 70 + Math.random() * 80, width: 1 + Math.random() * 1.5, alpha: 1 });
+  }
+
+  function drawGrid() {
+    ctx.lineCap = 'square';
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = rgba(CA, 0.09);
+    ctx.beginPath();
+    for (let x = 0; x <= canvas.width; x += GRID) { ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); }
+    for (let y = 0; y <= canvas.height; y += GRID) { ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); }
+    ctx.stroke();
+
+    const MINOR = 15;
+    ctx.lineWidth = 0.5;
+    ctx.strokeStyle = rgba(CA, 0.04);
+    ctx.beginPath();
+    for (let x = MINOR; x < canvas.width; x += MINOR) { if (x % GRID !== 0) { ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); } }
+    for (let y = MINOR; y < canvas.height; y += MINOR) { if (y % GRID !== 0) { ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); } }
+    ctx.stroke();
+
+    ctx.fillStyle = rgba(CA, 0.15);
+    for (let x = 0; x <= canvas.width; x += GRID) {
+      for (let y = 0; y <= canvas.height; y += GRID) {
+        ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+  }
+
+  function drawBolt(b) {
+    const hp = Math.min(b.pos, b.totalLen);
+    const tp = Math.max(0, hp - b.trailLen);
+    if (hp <= tp) return;
+
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    buildTrailPath(b, tp, hp);
+    ctx.lineWidth = b.width * 7;
+    ctx.strokeStyle = rgba(CA, b.alpha * 0.10);
+    ctx.stroke();
+
+    buildTrailPath(b, tp, hp);
+    ctx.lineWidth = b.width * 3.5;
+    ctx.strokeStyle = rgba(CA, b.alpha * 0.30);
+    ctx.stroke();
+
+    buildTrailPath(b, tp, hp);
+    ctx.lineWidth = b.width;
+    ctx.strokeStyle = rgba(CW, b.alpha * 0.92);
+    ctx.stroke();
+
+    if (b.pos <= b.totalLen + b.speed * 2) {
+      const head = posOnPath(b.path, hp);
+      const grd = ctx.createRadialGradient(head.x, head.y, 0, head.x, head.y, b.width * 7);
+      grd.addColorStop(0, `rgba(255,255,255,${b.alpha})`);
+      grd.addColorStop(0.25, rgba(CW, b.alpha * 0.85));
+      grd.addColorStop(0.55, rgba(CA, b.alpha * 0.45));
+      grd.addColorStop(1, 'transparent');
+      ctx.beginPath(); ctx.arc(head.x, head.y, b.width * 7, 0, Math.PI * 2);
+      ctx.fillStyle = grd; ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawGrid();
+
+    if (Math.random() < 0.045 && bolts.length < 18) spawnBolt();
+
+    bolts = bolts.filter(b => b.alpha > 0.02);
+    for (const b of bolts) {
+      b.pos += b.speed;
+      if (b.pos > b.totalLen + b.trailLen) b.alpha -= 0.03;
+      drawBolt(b);
+    }
+
+    animId = requestAnimationFrame(draw);
+  }
+
+  draw();
+
+  return function destroy() {
+    cancelAnimationFrame(animId);
+    window.removeEventListener('resize', resize);
+    canvas.remove();
+  };
+}
+
+// ══════════════════════════════════════════════════════════════════════════
 //  BACKGROUND THEME PICKER
 // ══════════════════════════════════════════════════════════════════════════
 (function initBgPicker() {
   const stored = localStorage.getItem('bgTheme') || 'none';
 
   function applyBgTheme(theme) {
+    if (window._bgCanvasDestroy) {
+      window._bgCanvasDestroy();
+      window._bgCanvasDestroy = null;
+    }
+
     if (theme === 'none') {
       document.body.removeAttribute('data-bg');
     } else {
@@ -614,6 +879,12 @@ socket.on('disconnect', () => {
     document.querySelectorAll('.bg-preset').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.bg === theme);
     });
+
+    if (theme === 'stars') {
+      window._bgCanvasDestroy = initStarsCanvas();
+    } else if (theme === 'circuit') {
+      window._bgCanvasDestroy = initCircuitCanvas();
+    }
   }
 
   applyBgTheme(stored);

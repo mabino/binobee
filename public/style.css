@@ -534,11 +534,11 @@ select { cursor: pointer; }
   z-index: -1;
   pointer-events: none;
   background-image:
-    radial-gradient(circle 40px at 50% 50%, rgba(249,199,79,.28), transparent),
-    radial-gradient(circle 65px at 50% 50%, rgba(244,162,97,.22), transparent),
-    radial-gradient(circle 28px at 50% 50%, rgba(144,190,109,.24), transparent),
-    radial-gradient(circle 55px at 50% 50%, rgba(249,199,79,.18), transparent),
-    radial-gradient(circle 38px at 50% 50%, rgba(244,162,97,.28), transparent);
+    radial-gradient(circle 40px at 50% 50%, rgba(249,199,79,.60), transparent),
+    radial-gradient(circle 65px at 50% 50%, rgba(244,162,97,.52), transparent),
+    radial-gradient(circle 28px at 50% 50%, rgba(144,190,109,.55), transparent),
+    radial-gradient(circle 55px at 50% 50%, rgba(249,199,79,.45), transparent),
+    radial-gradient(circle 38px at 50% 50%, rgba(244,162,97,.60), transparent);
   background-size: 220px 220px, 380px 380px, 160px 160px, 310px 310px, 200px 200px;
   background-position: 10% 20%, 60% 30%, 30% 70%, 78% 60%, 50% 82%;
   animation: bgBubblesFloat 14s ease-in-out infinite alternate;
@@ -579,9 +579,9 @@ select { cursor: pointer; }
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 80% 60% at 20% 30%, rgba(100,50,200,.75), transparent),
-    radial-gradient(ellipse 70% 50% at 80% 70%, rgba(40,90,200,.75), transparent),
-    radial-gradient(ellipse 60% 70% at 50% 50%, rgba(30,160,90,.55), transparent);
+    radial-gradient(ellipse 80% 60% at 20% 30%, rgba(130,60,240,.90), transparent),
+    radial-gradient(ellipse 70% 50% at 80% 70%, rgba(50,110,240,.88), transparent),
+    radial-gradient(ellipse 60% 70% at 50% 50%, rgba(40,195,110,.72), transparent);
   animation: bgAuroraShift 12s ease-in-out infinite alternate;
 }
 @keyframes bgAuroraShift {
@@ -598,9 +598,9 @@ select { cursor: pointer; }
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 180% 35% at 50% 115%, rgba(249,199,79,.42), transparent 60%),
-    radial-gradient(ellipse 160% 28% at 50% 108%, rgba(244,162,97,.32), transparent 60%),
-    radial-gradient(ellipse 140% 22% at 50% 102%, rgba(144,190,109,.24), transparent 60%);
+    radial-gradient(ellipse 180% 35% at 50% 115%, rgba(249,199,79,.72), transparent 60%),
+    radial-gradient(ellipse 160% 28% at 50% 108%, rgba(244,162,97,.62), transparent 60%),
+    radial-gradient(ellipse 140% 22% at 50% 102%, rgba(144,190,109,.52), transparent 60%);
   animation: bgWavesRise 7s ease-in-out infinite alternate;
 }
 @keyframes bgWavesRise {
@@ -619,12 +619,12 @@ select { cursor: pointer; }
   border-radius: 50%;
   background: conic-gradient(
     from 0deg at 35% 45%,
-    rgba(249,199,79,.42),
-    rgba(244,162,97,.38),
-    rgba(100,50,200,.52),
-    rgba(40,90,200,.48),
-    rgba(30,160,90,.36),
-    rgba(249,199,79,.42)
+    rgba(249,199,79,.72),
+    rgba(244,162,97,.68),
+    rgba(120,60,240,.80),
+    rgba(50,110,240,.76),
+    rgba(40,195,110,.64),
+    rgba(249,199,79,.72)
   );
   filter: blur(50px);
   animation: bgGradientSpin 18s linear infinite;

@@ -610,8 +610,9 @@ function initStarsCanvas() {
 
   let animId;
   let layers = [];
+  let shootingStars = [];
 
-  function genLayer(count, minR, maxR, speed, baseAlpha) {
+  function genLayer(count, minR, maxR, speedX, speedY, baseAlpha) {
     const stars = [];
     for (let i = 0; i < count; i++) {
       const rnd = Math.random();
@@ -619,24 +620,45 @@ function initStarsCanvas() {
         x: Math.random(),
         y: Math.random(),
         r: minR + Math.random() * (maxR - minR),
-        alpha: baseAlpha * (0.35 + Math.random() * 0.65),
-        twinkleSpeed: 0.4 + Math.random() * 2.0,
+        alpha: baseAlpha * (0.4 + Math.random() * 0.6),
+        twinkleSpeed: 0.3 + Math.random() * 2.5,
         twinklePhase: Math.random() * Math.PI * 2,
-        color: rnd > 0.88 ? [180, 215, 255] : rnd > 0.76 ? [255, 228, 160] : [255, 255, 255],
+        // blue giants, yellow/orange dwarfs, red giants, white
+        color: rnd > 0.94 ? [140, 190, 255]
+             : rnd > 0.88 ? [255, 220, 130]
+             : rnd > 0.83 ? [255, 170, 140]
+             : [255, 255, 255],
       });
     }
-    return { stars, speed, offset: 0 };
+    return { stars, speedX, speedY, offsetX: 0, offsetY: 0 };
   }
 
   function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     const area = canvas.width * canvas.height;
+    // Three parallax layers: far (slow, tiny), mid, near (fast, bright)
     layers = [
-      genLayer(Math.floor(area / 4500), 0.25, 0.75, 0.10, 0.45),
-      genLayer(Math.floor(area / 7500), 0.50, 1.20, 0.20, 0.72),
-      genLayer(Math.floor(area / 14000), 0.90, 2.20, 0.34, 1.00),
+      genLayer(Math.floor(area / 2800), 0.2, 0.65, 0.04, 0.005, 0.50),
+      genLayer(Math.floor(area / 5000), 0.45, 1.15, 0.12, 0.015, 0.80),
+      genLayer(Math.floor(area / 9500), 0.80, 2.40, 0.25, 0.035, 1.00),
     ];
+  }
+
+  function spawnShootingStar() {
+    const fromRight = Math.random() < 0.5;
+    const spd = 9 + Math.random() * 10;
+    const angle = (Math.PI * 0.08) + Math.random() * (Math.PI * 0.12);
+    shootingStars.push({
+      x: fromRight ? canvas.width + 40 : -40,
+      y: Math.random() * canvas.height * 0.6,
+      vx: (fromRight ? -1 : 1) * spd * Math.cos(angle),
+      vy: spd * Math.sin(angle),
+      trailLen: 90 + Math.random() * 130,
+      alpha: 1,
+      maxAlpha: 0.85 + Math.random() * 0.15,
+      width: 1.2 + Math.random() * 0.8,
+    });
   }
 
   window.addEventListener('resize', resize);
@@ -644,33 +666,88 @@ function initStarsCanvas() {
 
   let t = 0;
   function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
     t += 0.016;
 
+    // Deep-space background — pure near-black to avoid the body's navy showing through
+    ctx.fillStyle = '#01010a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Faint nebula haze to give depth (two overlapping blobs)
+    const neb1 = ctx.createRadialGradient(
+      canvas.width * 0.28, canvas.height * 0.38, 0,
+      canvas.width * 0.28, canvas.height * 0.38, canvas.width * 0.48
+    );
+    neb1.addColorStop(0, 'rgba(45, 15, 90, 0.22)');
+    neb1.addColorStop(0.55, 'rgba(20, 25, 70, 0.10)');
+    neb1.addColorStop(1, 'transparent');
+    ctx.fillStyle = neb1;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const neb2 = ctx.createRadialGradient(
+      canvas.width * 0.72, canvas.height * 0.62, 0,
+      canvas.width * 0.72, canvas.height * 0.62, canvas.width * 0.38
+    );
+    neb2.addColorStop(0, 'rgba(15, 45, 80, 0.18)');
+    neb2.addColorStop(0.6, 'rgba(10, 20, 50, 0.08)');
+    neb2.addColorStop(1, 'transparent');
+    ctx.fillStyle = neb2;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw star layers (back-to-front for depth)
     for (const layer of layers) {
-      layer.offset = (layer.offset + layer.speed) % canvas.width;
+      layer.offsetX = (layer.offsetX + layer.speedX) % canvas.width;
+      layer.offsetY = (layer.offsetY + layer.speedY) % canvas.height;
       for (const s of layer.stars) {
-        const x = (s.x * canvas.width + layer.offset) % canvas.width;
-        const y = s.y * canvas.height;
-        const twinkle = 0.55 + 0.45 * Math.sin(t * s.twinkleSpeed + s.twinklePhase);
+        const x = (s.x * canvas.width  + layer.offsetX) % canvas.width;
+        const y = (s.y * canvas.height + layer.offsetY) % canvas.height;
+        const twinkle = 0.5 + 0.5 * Math.sin(t * s.twinkleSpeed + s.twinklePhase);
         const alpha = s.alpha * twinkle;
         const [r, g, b] = s.color;
 
-        if (s.r > 1.1 && alpha > 0.45) {
-          const grd = ctx.createRadialGradient(x, y, s.r * 0.4, x, y, s.r * 4.5);
-          grd.addColorStop(0, `rgba(${r},${g},${b},${alpha})`);
+        // Soft glow halo for brighter stars
+        if (s.r > 0.9 && alpha > 0.3) {
+          const haloR = s.r * (s.r > 1.5 ? 5.5 : 4.0);
+          const grd = ctx.createRadialGradient(x, y, 0, x, y, haloR);
+          grd.addColorStop(0, `rgba(${r},${g},${b},${(alpha * 0.7).toFixed(3)})`);
+          grd.addColorStop(0.35, `rgba(${r},${g},${b},${(alpha * 0.25).toFixed(3)})`);
           grd.addColorStop(1, 'transparent');
           ctx.beginPath();
-          ctx.arc(x, y, s.r * 4.5, 0, Math.PI * 2);
+          ctx.arc(x, y, haloR, 0, Math.PI * 2);
           ctx.fillStyle = grd;
           ctx.fill();
         }
 
         ctx.beginPath();
         ctx.arc(x, y, s.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
+        ctx.fillStyle = `rgba(${r},${g},${b},${alpha.toFixed(3)})`;
         ctx.fill();
       }
+    }
+
+    // Shooting stars
+    if (Math.random() < 0.0025) spawnShootingStar();
+    shootingStars = shootingStars.filter(s => s.alpha > 0.04);
+    for (const ss of shootingStars) {
+      ss.x += ss.vx;
+      ss.y += ss.vy;
+      if (ss.x < -200 || ss.x > canvas.width + 200 || ss.y > canvas.height + 50) {
+        ss.alpha = 0; continue;
+      }
+      const spd = Math.hypot(ss.vx, ss.vy);
+      const tx = ss.x - ss.vx * (ss.trailLen / spd);
+      const ty = ss.y - ss.vy * (ss.trailLen / spd);
+      const grad = ctx.createLinearGradient(tx, ty, ss.x, ss.y);
+      grad.addColorStop(0, 'transparent');
+      grad.addColorStop(0.7, `rgba(200,220,255,${(ss.alpha * ss.maxAlpha * 0.4).toFixed(3)})`);
+      grad.addColorStop(1, `rgba(255,255,255,${(ss.alpha * ss.maxAlpha).toFixed(3)})`);
+      ctx.beginPath();
+      ctx.moveTo(tx, ty);
+      ctx.lineTo(ss.x, ss.y);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = ss.width;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+      ss.alpha -= 0.012;
     }
 
     animId = requestAnimationFrame(draw);
@@ -696,12 +773,13 @@ function initCircuitCanvas() {
   const ctx = canvas.getContext('2d');
 
   const GRID = 75;
-  const CA = [249, 199, 79];  // amber
-  const CW = [255, 242, 180]; // bright white-yellow
+  const CA = [249, 199, 79];   // amber
+  const CW = [255, 248, 200];  // bright white-yellow
+  const CB = [160, 210, 255];  // blue-white (lightning variant)
 
   function rgba(c, a) { return `rgba(${c[0]},${c[1]},${c[2]},${a})`; }
 
-  let animId, gridW, gridH, bolts = [];
+  let animId, gridW, gridH, bolts = [], sparks = [];
 
   function resize() {
     canvas.width = window.innerWidth;
@@ -716,13 +794,13 @@ function initCircuitCanvas() {
   function generatePath() {
     const points = [{ x: Math.floor(Math.random() * gridW) * GRID, y: Math.floor(Math.random() * gridH) * GRID }];
     let cx = points[0].x, cy = points[0].y, lastDir = null;
-    const numSeg = 2 + Math.floor(Math.random() * 5);
+    const numSeg = 3 + Math.floor(Math.random() * 7);
     const DIRS = [{ dx: 1, dy: 0 }, { dx: -1, dy: 0 }, { dx: 0, dy: 1 }, { dx: 0, dy: -1 }];
 
     for (let i = 0; i < numSeg; i++) {
       let dirs = DIRS.filter(d => !lastDir || !(d.dx === -lastDir.dx && d.dy === -lastDir.dy));
       const dir = dirs[Math.floor(Math.random() * dirs.length)];
-      const cells = 1 + Math.floor(Math.random() * 5);
+      const cells = 1 + Math.floor(Math.random() * 6);
       cx += dir.dx * cells * GRID;
       cy += dir.dy * cells * GRID;
       points.push({ x: cx, y: cy });
@@ -765,15 +843,44 @@ function initCircuitCanvas() {
     }
   }
 
-  function spawnBolt() {
-    const path = generatePath();
-    bolts.push({ path, totalLen: pathLength(path), pos: 0, speed: 3 + Math.random() * 6, trailLen: 70 + Math.random() * 80, width: 1 + Math.random() * 1.5, alpha: 1 });
+  function spawnSparks(x, y, color, count) {
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const spd = 0.6 + Math.random() * 2.8;
+      sparks.push({
+        x, y,
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd,
+        alpha: 0.75 + Math.random() * 0.25,
+        r: 0.8 + Math.random() * 1.4,
+        color,
+      });
+    }
+  }
+
+  function spawnBolt(fromPath, fromPos) {
+    const isBlue = Math.random() < 0.25;
+    const path = fromPath || generatePath();
+    const startPos = fromPos || 0;
+    bolts.push({
+      path,
+      totalLen: pathLength(path),
+      pos: startPos,
+      speed: 5 + Math.random() * 11,
+      trailLen: 55 + Math.random() * 90,
+      width: 0.9 + Math.random() * 1.8,
+      alpha: 1,
+      color: isBlue ? CB : CA,
+      bright: isBlue ? [220, 240, 255] : CW,
+      branchSpawned: false,
+      sparkTimer: 0,
+    });
   }
 
   function drawGrid() {
     ctx.lineCap = 'square';
     ctx.lineWidth = 1;
-    ctx.strokeStyle = rgba(CA, 0.09);
+    ctx.strokeStyle = rgba(CA, 0.10);
     ctx.beginPath();
     for (let x = 0; x <= canvas.width; x += GRID) { ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); }
     for (let y = 0; y <= canvas.height; y += GRID) { ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); }
@@ -781,13 +888,13 @@ function initCircuitCanvas() {
 
     const MINOR = 15;
     ctx.lineWidth = 0.5;
-    ctx.strokeStyle = rgba(CA, 0.04);
+    ctx.strokeStyle = rgba(CA, 0.045);
     ctx.beginPath();
     for (let x = MINOR; x < canvas.width; x += MINOR) { if (x % GRID !== 0) { ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); } }
     for (let y = MINOR; y < canvas.height; y += MINOR) { if (y % GRID !== 0) { ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); } }
     ctx.stroke();
 
-    ctx.fillStyle = rgba(CA, 0.15);
+    ctx.fillStyle = rgba(CA, 0.18);
     for (let x = 0; x <= canvas.width; x += GRID) {
       for (let y = 0; y <= canvas.height; y += GRID) {
         ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI * 2); ctx.fill();
@@ -804,30 +911,39 @@ function initCircuitCanvas() {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
+    // Outer glow
     buildTrailPath(b, tp, hp);
-    ctx.lineWidth = b.width * 7;
-    ctx.strokeStyle = rgba(CA, b.alpha * 0.10);
+    ctx.lineWidth = b.width * 9;
+    ctx.strokeStyle = rgba(b.color, b.alpha * 0.12);
     ctx.stroke();
 
+    // Mid glow
     buildTrailPath(b, tp, hp);
-    ctx.lineWidth = b.width * 3.5;
-    ctx.strokeStyle = rgba(CA, b.alpha * 0.30);
+    ctx.lineWidth = b.width * 4.5;
+    ctx.strokeStyle = rgba(b.color, b.alpha * 0.35);
     ctx.stroke();
 
+    // Core
     buildTrailPath(b, tp, hp);
     ctx.lineWidth = b.width;
-    ctx.strokeStyle = rgba(CW, b.alpha * 0.92);
+    ctx.strokeStyle = rgba(b.bright, b.alpha * 0.95);
     ctx.stroke();
 
-    if (b.pos <= b.totalLen + b.speed * 2) {
+    // Head spark
+    if (b.pos <= b.totalLen + b.speed * 3) {
       const head = posOnPath(b.path, hp);
-      const grd = ctx.createRadialGradient(head.x, head.y, 0, head.x, head.y, b.width * 7);
-      grd.addColorStop(0, `rgba(255,255,255,${b.alpha})`);
-      grd.addColorStop(0.25, rgba(CW, b.alpha * 0.85));
-      grd.addColorStop(0.55, rgba(CA, b.alpha * 0.45));
-      grd.addColorStop(1, 'transparent');
-      ctx.beginPath(); ctx.arc(head.x, head.y, b.width * 7, 0, Math.PI * 2);
+      const headR = b.width * 9;
+      const grd = ctx.createRadialGradient(head.x, head.y, 0, head.x, head.y, headR);
+      grd.addColorStop(0,    `rgba(255,255,255,${b.alpha})`);
+      grd.addColorStop(0.2,  rgba(b.bright, b.alpha * 0.9));
+      grd.addColorStop(0.5,  rgba(b.color,  b.alpha * 0.55));
+      grd.addColorStop(1,    'transparent');
+      ctx.beginPath(); ctx.arc(head.x, head.y, headR, 0, Math.PI * 2);
       ctx.fillStyle = grd; ctx.fill();
+
+      // Occasionally spawn sparks at the head
+      b.sparkTimer++;
+      if (b.sparkTimer % 4 === 0) spawnSparks(head.x, head.y, b.bright, 2 + Math.floor(Math.random() * 3));
     }
 
     ctx.restore();
@@ -837,13 +953,35 @@ function initCircuitCanvas() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawGrid();
 
-    if (Math.random() < 0.045 && bolts.length < 18) spawnBolt();
+    // Spawn new bolts more aggressively for a "racing" feel
+    if (Math.random() < 0.07 && bolts.length < 28) spawnBolt();
 
     bolts = bolts.filter(b => b.alpha > 0.02);
     for (const b of bolts) {
       b.pos += b.speed;
-      if (b.pos > b.totalLen + b.trailLen) b.alpha -= 0.03;
+
+      // Random branching: when bolt is mid-path, small chance to fork a new bolt
+      if (!b.branchSpawned && b.pos > b.totalLen * 0.3 && Math.random() < 0.015 && bolts.length < 28) {
+        b.branchSpawned = true;
+        spawnBolt(); // independent branch from a random new start
+      }
+
+      if (b.pos > b.totalLen + b.trailLen) b.alpha -= 0.035;
       drawBolt(b);
+    }
+
+    // Draw and age sparks
+    sparks = sparks.filter(s => s.alpha > 0.04);
+    for (const s of sparks) {
+      s.x += s.vx;
+      s.y += s.vy;
+      s.vx *= 0.88;
+      s.vy *= 0.88;
+      s.alpha -= 0.025;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = rgba(s.color, s.alpha);
+      ctx.fill();
     }
 
     animId = requestAnimationFrame(draw);

@@ -599,9 +599,9 @@ select { cursor: pointer; }
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 180% 35% at 50% 115%, rgba(0,119,190,.60), transparent 70%),
-    radial-gradient(ellipse 160% 28% at 50% 108%, rgba(0,168,204,.50), transparent 70%),
-    radial-gradient(ellipse 140% 22% at 50% 102%, rgba(34,87,122,.40), transparent 70%);
+    radial-gradient(ellipse 180% 35% at 50% 115%, rgba(0, 255, 255, 0.8), transparent 60%),
+    radial-gradient(ellipse 160% 28% at 50% 108%, rgba(0, 191, 255, 0.7), transparent 60%),
+    radial-gradient(ellipse 140% 22% at 50% 102%, rgba(32, 178, 170, 0.6), transparent 60%);
   animation: bgWavesRise 7s ease-in-out infinite alternate;
 }
 @keyframes bgWavesRise {

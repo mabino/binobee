@@ -28,11 +28,12 @@
     <div class="card">
       <label for="player-name">Your name</label>
       <input id="player-name" type="text" maxlength="20" placeholder="Enter your name…" autocomplete="off" />
-      <div class="btn-group">
+      <div id="main-actions" class="btn-group">
         <button id="btn-create" class="btn btn-primary">Create Room</button>
         <button id="btn-join-toggle" class="btn btn-secondary">Join Room</button>
       </div>
       <div id="join-form" class="hidden">
+        <button id="btn-join-back" class="btn btn-ghost btn-sm" style="align-self:flex-start;padding-left:0">← Back</button>
         <label for="room-code-input">Room code</label>
         <input id="room-code-input" type="text" maxlength="6" placeholder="XXXXXX" autocomplete="off"
                style="text-transform:uppercase;letter-spacing:.2em" />
@@ -180,6 +181,19 @@
       <button id="btn-leave-gameover" class="btn btn-ghost">Leave</button>
     </div>
     <p id="rematch-status" class="hint hidden"></p>
+  </div>
+
+  <!-- ─── Background theme picker (floating) ─────────────────────────────── -->
+  <div id="bg-picker" class="bg-picker">
+    <button id="btn-bg-toggle" class="btn-bg-toggle" title="Change background theme">🎨</button>
+    <div id="bg-picker-menu" class="bg-picker-menu hidden">
+      <div class="bg-picker-title">Background</div>
+      <button class="bg-preset" data-bg="none">● None</button>
+      <button class="bg-preset" data-bg="stars">✨ Stars</button>
+      <button class="bg-preset" data-bg="bubbles">🫧 Bubbles</button>
+      <button class="bg-preset" data-bg="hex">⬡ Hex Grid</button>
+      <button class="bg-preset" data-bg="aurora">🌌 Aurora</button>
+    </div>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>

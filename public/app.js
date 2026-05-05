@@ -48,7 +48,15 @@ socket.on('tts:config', cfg => {
 //  LANDING SCREEN
 // ══════════════════════════════════════════════════════════════════════════
 $('btn-join-toggle').addEventListener('click', () => {
-  $('join-form').classList.toggle('hidden');
+  $('join-form').classList.remove('hidden');
+  $('main-actions').classList.add('hidden');
+  $('landing-error').classList.add('hidden');
+});
+
+$('btn-join-back').addEventListener('click', () => {
+  $('join-form').classList.add('hidden');
+  $('main-actions').classList.remove('hidden');
+  $('landing-error').classList.add('hidden');
 });
 
 $('btn-create').addEventListener('click', () => {
@@ -122,13 +130,11 @@ function renderPlayerList(players) {
 }
 
 // ── Lobby config controls ──────────────────────────────────────────────────
-function syncConfig() {
+function renderConfigUI() {
   const mode = document.querySelector('input[name="mode"]:checked')?.value || 'rounds';
   const maxRounds = parseInt($('cfg-max-rounds').value);
   const pointsToWin = parseInt($('cfg-points-to-win').value);
   const timerSeconds = parseInt($('cfg-timer').value);
-  const difficulty = $('cfg-difficulty').value;
-  const showWpm = $('cfg-show-wpm').checked;
 
   $('rounds-val').textContent = maxRounds;
   $('points-val').textContent = pointsToWin;
@@ -136,6 +142,17 @@ function syncConfig() {
 
   $('cfg-rounds').classList.toggle('hidden', mode !== 'rounds');
   $('cfg-points').classList.toggle('hidden', mode !== 'points');
+}
+
+function syncConfig() {
+  renderConfigUI();
+
+  const mode = document.querySelector('input[name="mode"]:checked')?.value || 'rounds';
+  const maxRounds = parseInt($('cfg-max-rounds').value);
+  const pointsToWin = parseInt($('cfg-points-to-win').value);
+  const timerSeconds = parseInt($('cfg-timer').value);
+  const difficulty = $('cfg-difficulty').value;
+  const showWpm = $('cfg-show-wpm').checked;
 
   state.config = { mode, maxRounds, pointsToWin, timerSeconds, difficulty, showWpm };
 
@@ -206,8 +223,8 @@ socket.on('room:player-left', ({ playerName }) => {
 
 socket.on('game:configured', ({ config }) => {
   state.config = config;
-  // Sync sliders if I'm not the host
-  if (!isHost()) return;
+  // Host already has the latest values — skip to avoid an emit loop
+  if (isHost()) return;
   applyConfigToControls(config);
 });
 
@@ -224,12 +241,12 @@ function applyConfigToControls(cfg) {
     const radio = document.querySelector(`input[name="mode"][value="${cfg.mode}"]`);
     if (radio) radio.checked = true;
   }
-  if (cfg.maxRounds)   $('cfg-max-rounds').value   = cfg.maxRounds;
-  if (cfg.pointsToWin) $('cfg-points-to-win').value = cfg.pointsToWin;
-  if (cfg.timerSeconds)$('cfg-timer').value          = cfg.timerSeconds;
-  if (cfg.difficulty)  $('cfg-difficulty').value     = cfg.difficulty;
-  if (cfg.showWpm != null) $('cfg-show-wpm').checked = cfg.showWpm;
-  syncConfig();
+  if (cfg.maxRounds != null)   $('cfg-max-rounds').value   = cfg.maxRounds;
+  if (cfg.pointsToWin != null) $('cfg-points-to-win').value = cfg.pointsToWin;
+  if (cfg.timerSeconds != null) $('cfg-timer').value        = cfg.timerSeconds;
+  if (cfg.difficulty)  $('cfg-difficulty').value            = cfg.difficulty;
+  if (cfg.showWpm != null) $('cfg-show-wpm').checked        = cfg.showWpm;
+  renderConfigUI(); // update labels/sections without emitting to server
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -547,3 +564,42 @@ socket.on('error', ({ message }) => {
 socket.on('disconnect', () => {
   console.warn('Disconnected from server');
 });
+
+// ══════════════════════════════════════════════════════════════════════════
+//  BACKGROUND THEME PICKER
+// ══════════════════════════════════════════════════════════════════════════
+(function initBgPicker() {
+  const stored = localStorage.getItem('bgTheme') || 'none';
+
+  function applyBgTheme(theme) {
+    if (theme === 'none') {
+      document.body.removeAttribute('data-bg');
+    } else {
+      document.body.setAttribute('data-bg', theme);
+    }
+    localStorage.setItem('bgTheme', theme);
+    document.querySelectorAll('.bg-preset').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.bg === theme);
+    });
+  }
+
+  applyBgTheme(stored);
+
+  $('btn-bg-toggle').addEventListener('click', e => {
+    e.stopPropagation();
+    $('bg-picker-menu').classList.toggle('hidden');
+  });
+
+  document.querySelectorAll('.bg-preset').forEach(btn => {
+    btn.addEventListener('click', () => {
+      applyBgTheme(btn.dataset.bg);
+      $('bg-picker-menu').classList.add('hidden');
+    });
+  });
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#bg-picker')) {
+      $('bg-picker-menu').classList.add('hidden');
+    }
+  });
+})();

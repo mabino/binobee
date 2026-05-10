@@ -116,38 +116,29 @@ const WORDS = {
   ]
 };
 
-class Dictionary {
+class LocalProvider {
   constructor() {
-    this.cache = new Map();
-    this.allWords = [...WORDS.easy, ...WORDS.medium, ...WORDS.hard];
+    this.words = WORDS;
   }
 
-  async getRandomWord(config) {
+  async getRandomWord(difficulty) {
     let pool;
-    if (config.customDictionary?.length > 0) {
-      pool = config.customDictionary;
-    } else {
-      switch (config.difficulty) {
-        case 'easy':   pool = WORDS.easy;   break;
-        case 'medium': pool = WORDS.medium; break;
-        case 'hard':   pool = WORDS.hard;   break;
-        default: {
-          // mixed: skew toward medium/hard for variety
-          pool = [
-            ...WORDS.easy.slice(0, 40),
-            ...WORDS.medium,
-            ...WORDS.hard
-          ];
-        }
+    switch (difficulty) {
+      case 'easy':   pool = this.words.easy;   break;
+      case 'medium': pool = this.words.medium; break;
+      case 'hard':   pool = this.words.hard;   break;
+      default: {
+        pool = [
+          ...this.words.easy.slice(0, 40),
+          ...this.words.medium,
+          ...this.words.hard
+        ];
       }
     }
-    const word = pool[Math.floor(Math.random() * pool.length)];
-    return this.getDefinition(word);
+    return pool[Math.floor(Math.random() * pool.length)];
   }
 
   async getDefinition(word) {
-    if (this.cache.has(word)) return this.cache.get(word);
-
     try {
       const res = await fetch(
         `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`,
@@ -159,27 +150,105 @@ class Dictionary {
         const meaning = entry.meanings?.[0];
         const def = meaning?.definitions?.[0];
 
-        const info = {
+        return {
           word: entry.word || word,
           phonetic: entry.phonetic || entry.phonetics?.find(p => p.text)?.text || `/${word}/`,
           partOfSpeech: meaning?.partOfSpeech || '',
           definition: def?.definition || 'No definition available.',
           example: def?.example || null
         };
-        this.cache.set(word, info);
-        return info;
       }
     } catch (_) { /* network/timeout — fall through */ }
 
-    const fallback = {
+    return {
       word,
       phonetic: `/${word}/`,
       partOfSpeech: '',
       definition: 'No definition available.',
       example: null
     };
-    this.cache.set(word, fallback);
-    return fallback;
+  }
+}
+
+class WordnikProvider {
+  constructor(apiKey) {
+    this.apiKey = apiKey;
+    this.baseUrl = 'https://api.wordnik.com/v4';
+  }
+
+  async getRandomWord(difficulty) {
+    // Determine frequency ranges based on difficulty
+    // easy: common words, medium: moderate, hard: rare
+    const ranges = {
+      easy:   { min: 10000, max: -1 },
+      medium: { min: 1000,  max: 10000 },
+      hard:   { min: 1,     max: 1000 }
+    };
+    const range = ranges[difficulty] || { min: 100, max: -1 };
+
+    const url = `${this.baseUrl}/words.json/randomWord?hasDictionaryDef=true&minCorpusCount=${range.min}&maxCorpusCount=${range.max}&minLength=4&api_key=${this.apiKey}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) throw new Error('Wordnik fetch failed');
+    const data = await res.json();
+    return data.word;
+  }
+
+  async getDefinition(word) {
+    const common = { word, phonetic: `/${word}/`, partOfSpeech: '', definition: 'No definition available.', example: null };
+    
+    try {
+      // 1. Get definitions
+      const defRes = await fetch(`${this.baseUrl}/word.json/${encodeURIComponent(word)}/definitions?limit=1&includeRelated=false&useCanonical=false&includeTags=false&api_key=${this.apiKey}`);
+      if (defRes.ok) {
+        const defs = await defRes.json();
+        if (defs.length > 0) {
+          common.definition = defs[0].text;
+          common.partOfSpeech = defs[0].partOfSpeech;
+        }
+      }
+
+      // 2. Get examples
+      const exRes = await fetch(`${this.baseUrl}/word.json/${encodeURIComponent(word)}/examples?limit=1&includeDuplicates=false&useCanonical=false&api_key=${this.apiKey}`);
+      if (exRes.ok) {
+        const exs = await exRes.json();
+        if (exs.examples?.length > 0) {
+          common.example = exs.examples[0].text;
+        }
+      }
+      
+      // 3. Phonetic (approximate since Wordnik doesn't always have one plain text phonetic)
+      return common;
+    } catch (_) {
+      return common;
+    }
+  }
+}
+
+class Dictionary {
+  constructor() {
+    this.cache = new Map();
+    this.provider = process.env.WORDNIK_API_KEY 
+      ? new WordnikProvider(process.env.WORDNIK_API_KEY)
+      : new LocalProvider();
+    
+    console.log(`[Dictionary] Using ${this.provider.constructor.name}`);
+  }
+
+  async getRandomWord(config) {
+    let word;
+    if (config.customDictionary?.length > 0) {
+      word = config.customDictionary[Math.floor(Math.random() * config.customDictionary.length)];
+    } else {
+      word = await this.provider.getRandomWord(config.difficulty);
+    }
+    return this.getDefinition(word);
+  }
+
+  async getDefinition(word) {
+    if (this.cache.has(word)) return this.cache.get(word);
+    const info = await this.provider.getDefinition(word);
+    this.cache.set(word, info);
+    return info;
   }
 }
 

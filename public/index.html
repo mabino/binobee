@@ -4,6 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>🐝 Bino Bee — The Spelling Bee for Binos (and Friends)</title>
+  <script>
+    (function () {
+      var t = localStorage.getItem('binolabs-theme') || localStorage.getItem('seccam-theme');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
@@ -298,6 +304,12 @@
       <button class="bg-preset" data-bg="circuit">⚡ Circuit</button>
     </div>
   </div>
+
+  <!-- ─── Thin Footer ────────────────────────────────────────────────── -->
+  <footer class="app-footer">
+    <span>&copy; 2026 BinoLabs &bull; BinoBee</span>
+    <button id="theme-toggle" title="Toggle light/dark theme" aria-label="Toggle light/dark theme">◐</button>
+  </footer>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="/tts.js"></script>

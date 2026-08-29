@@ -1386,4 +1386,25 @@ function initCircuitCanvas() {
       $('bg-picker-menu').classList.add('hidden');
     }
   });
+
+  // ── Light/Dark Mode Toggle & System Sync ─────────────────────────────────
+  const themeBtn = $('theme-toggle');
+  if (themeBtn) {
+    themeBtn.addEventListener('click', () => {
+      const pinned = document.documentElement.getAttribute('data-theme');
+      const effective = pinned ||
+        (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      const next = effective === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('binolabs-theme', next);
+    });
+  }
+
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      if (!localStorage.getItem('binolabs-theme') && !localStorage.getItem('seccam-theme')) {
+        document.documentElement.removeAttribute('data-theme');
+      }
+    });
+  }
 })();
